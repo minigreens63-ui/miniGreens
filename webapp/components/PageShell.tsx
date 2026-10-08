@@ -2,10 +2,11 @@ interface Props {
   eyebrow: string;
   title: string;
   intro: string;
+  badge?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function PageShell({ eyebrow, title, intro, children }: Props) {
+export function PageShell({ eyebrow, title, intro, badge, children }: Props) {
   return (
     <div>
       <div className="border-b border-black/5 bg-(--color-cream)">
@@ -17,6 +18,7 @@ export function PageShell({ eyebrow, title, intro, children }: Props) {
             {title}
           </h1>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-(--color-forest)/70">{intro}</p>
+          {badge && <div className="mt-6">{badge}</div>}
         </div>
       </div>
 

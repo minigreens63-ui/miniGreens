@@ -54,8 +54,14 @@ export async function syncPushTokenForUser(userId: string): Promise<void> {
 }
 
 /** Route the user to the right screen when they tap a push notification. */
-export function routeFromNotificationData(data: Record<string, unknown> | null | undefined): void {
-  if (data && data.type === 'order_status' && typeof data.order_id === 'string') {
+// `type` is a separate column on the `notifications` row, not a field inside its `data`
+// jsonb — the Expo push payload embeds both in the same object, so callers vary. Pass each
+// explicitly rather than assuming `data.type` exists.
+export function routeFromNotificationData(
+  type: unknown,
+  data: Record<string, unknown> | null | undefined,
+): void {
+  if (type === 'order_status' && data && typeof data.order_id === 'string') {
     router.push(`/order/${data.order_id}`);
     return;
   }
@@ -70,17 +76,15 @@ export function addNotificationResponseListener(): () => void {
   Notifications.getLastNotificationResponseAsync()
     .then((response) => {
       if (response) {
-        routeFromNotificationData(
-          response.notification.request.content.data as Record<string, unknown> | null,
-        );
+        const data = response.notification.request.content.data as Record<string, unknown> | null;
+        routeFromNotificationData(data?.type, data);
       }
     })
     .catch(() => {});
 
   const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-    routeFromNotificationData(
-      response.notification.request.content.data as Record<string, unknown> | null,
-    );
+    const data = response.notification.request.content.data as Record<string, unknown> | null;
+    routeFromNotificationData(data?.type, data);
   });
   return () => sub.remove();
 }

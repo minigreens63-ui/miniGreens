@@ -47,15 +47,15 @@ here. That means:
 
 | ID | Area | Status |
 |----|------|--------|
-| Q1 | Auth & onboarding | IN PROGRESS — gating + validation fixes done & live-verified; OTP success path blocked on a test inbox (see Q1 notes) |
-| Q2 | Home | TODO |
+| Q1 | Auth & onboarding | IN PROGRESS — gating + validation fixes live-verified; session persistence now confirmed with a real account (2026-10-07); OTP code-entry round-trip still needs the user to actually type a code |
+| Q2 | Home | DONE — fully live-verified against real data 2026-10-07, see Q2 notes for 2 findings |
 | Q3 | Catalogue (Explore / Search / Category / Product detail) | IN PROGRESS — read-only checks + availability fixes done; admin-write checks need a go-ahead (see Q3 notes) |
-| Q4 | Cart, Checkout & Pre-order | IN PROGRESS — stock blocker resolved (DB ledger works); code review done; live order placement blocked on a test account; decisions on bugs 23 & 24 needed |
-| Q5 | Orders (list, detail, status sync) | IN PROGRESS — regression found & fixed (code-reviewed only); live status-sync check needs a test account |
-| Q6 | Subscriptions (curated, custom, manage) | IN PROGRESS — error-swallowing + signed-out gaps fixed & live-verified; admin engine round-trip needs a go-ahead |
-| Q7 | Partner / B2B | TODO |
-| Q8 | Offers & Discounts | TODO |
-| Q9 | Notifications | TODO |
+| Q4 | Cart, Checkout & Pre-order | IN PROGRESS — stock blocker resolved; **a real test order was placed and fully verified end to end 2026-10-07** (cart → coupon error path → address selection → place → success screen → order detail); decisions on bugs 23 & 24 still needed |
+| Q5 | Orders (list, detail, status sync) | IN PROGRESS — **PRE-ORDER pill + Type/status tracker live-verified against real order history 2026-10-07**, including a genuinely Delivered order; admin-side status-change push still unconfirmed |
+| Q6 | Subscriptions (curated, custom, manage) | IN PROGRESS — error-handling + signed-out fixes live-verified; **Pause → Resume round-trip live-verified on a real active subscription 2026-10-07**, restored to its original state |
+| Q7 | Partner / B2B | IN PROGRESS — real bugs found & fixed; **the existing-application redirect was live-verified against a real approved-partner account 2026-10-07**; KYC upload round-trip still needs a fresh (non-approved) applicant account |
+| Q8 | Offers & Discounts | IN PROGRESS — real bug found & fixed, live-verified against real data 2026-10-07; admin-side creation of each discount shape (flat/%/min-order/usage-cap/expired) not yet exercised |
+| Q9 | Notifications | IN PROGRESS — **found and fixed a real bug** (notification-tap deep-linking was completely broken); live-verified 2026-10-07 |
 | Q10 | Profile & Account | TODO |
 | Q11 | Content (Healthy Living articles, Women Who Grow, legal/support) | TODO |
 | Q12 | Cross-cutting UI/UX pass (all screens) | TODO |
@@ -111,6 +111,20 @@ Append a row per bug the moment it's found. Never delete a row — update `statu
 | 34 | Q6 | minor | `(tabs)/subscriptions.tsx`'s plan fetch has no error handling — a network failure renders the same as "no plans available" would | open — low priority, same class as bug 30 |
 | 35 | Q6 | minor | First-delivery-date fields on both subscription screens are free-text (no date picker, no format validation before insert) — an invalid string surfaces as Supabase's raw Postgres error | open — low priority |
 | 36 | Q6 | info | Admin's "generate orders now" engine (curated + custom, idempotency) was verified end-to-end in a prior session (2026-09-21, see `GAP_REPORT.md`). Not re-run here — would create/delete real test data, needs a go-ahead | not re-verified this session |
+| 37 | Q7 | major | `partner/apply.tsx` never checked for an existing application before submitting. `partners.profile_id` has a **unique constraint**, so a second submission fails with a raw Postgres "duplicate key" error. This got more likely to be hit once T13/T14 added direct deep links (Home's Business CTA chips, Women Who Grow) that send *any* visitor straight to this form regardless of their real status — the Profile menu already routed correctly by status, but these new entry points didn't | fixed — checks for an existing `partners` row on mount and redirects (pending → submitted screen, approved/rejected → dashboard) before the form ever renders |
+| 38 | Q7 | major | `partner/apply.tsx` was also reachable signed-out with the full form active; submit silently no-op'd | fixed — same `Screen`+`EmptyState` login-prompt pattern, live-verified |
+| 39 | Q7 | major | `partner/business-order.tsx`'s data-load effect returned early when signed out without clearing `loading` — stuck on an infinite spinner, never reaching the "Business Ordering Unavailable" message every other visitor sees (the screen is disabled via `BUSINESS_ORDER_ENABLED = false` for everyone, so this only affected the signed-out case) | fixed — `loading` now clears either way; live-verified it shows the unavailable message |
+| 40 | Q7 | info | `partner/submitted.tsx` is fully static, no issues | closed |
+| 41 | Q7 | info | The `?type=` deep-link preselect (T13/T14) was re-confirmed working for `restaurant` after the Q7 fixes (consistent with the earlier cafe/women spot-checks) — code path is unchanged by this session's edits, so the remaining 3 types (shop, fitness_wellness, community) are inferred working, not individually re-tested | closed |
+| 42 | Q8 | major | Home's `OffersBanner` picked the "top" non-birthday discount by value alone, ignoring `starts_at`/`expires_at`/`usage_limit` — it could advertise a coupon that `validate_discount` would then reject at checkout. `BirthdayBanner` had the same gap for `expires_at`/`usage_limit`. Live data only has 2 evergreen birthday coupons, so this wasn't visibly triggered today, but it's a real bug waiting for the first time-limited promo an admin creates | fixed — both now apply the same validity filter `/offers` already used |
+| 43 | Q9 | blocker | **Tapping any notification in the in-app inbox never navigated to its order — confirmed with a real account and real data.** `routeFromNotificationData()` checked `data.type === 'order_status'`, but `type` is a column on the `notifications` row, not a field inside its `data` jsonb blob (confirmed by reading a real row via REST: `data` only has `status`/`order_id`/`order_number`). The push-notification payload happens to embed `type` inside its own data object, so a real device push tap was unaffected — only the in-app inbox list (the primary, most-used surface) was broken. Every "Order placed/confirmed/shipped/delivered" notification tap just silently reloaded the inbox | fixed — `routeFromNotificationData` now takes `(type, data)` explicitly; updated all 3 call sites (`notifications.tsx`'s list tap, and both push-response handlers in `lib/notifications.ts`). Live-verified: tapping an unread notification now correctly opens `/order/<id>` with the right order |
+| 44 | Q6 | info | Live-verified Pause → Resume on a real active subscription ("Starter", ₹399/week) — both wrote cleanly with no error, status flipped correctly each time, restored to Active at the end | closed |
+| 45 | Q4/Q5 | info | Placed a real test pre-order (Green Vitality + Wheatgrass, ₹309) end-to-end: cart → invalid-coupon rejection ("That code doesn't exist.") → address selection from 4 existing saved addresses → place → success screen → Orders list (PRE-ORDER pill correct) → order detail (Type: Pre-order correct, full status tracker). A genuinely **Delivered** historical order (MG34706084) was also opened and showed all 5 tracker steps completed with correct descriptions | closed — this is the test-account round-trip Q1/Q4/Q5 were blocked on |
+| 46 | Q4 | info | Confirmed live: an older real order charged ₹35.49 delivery fee (matching webapp's rate) while my new order charged ₹40 (current mobile rate) — corroborates bug 23 (the two apps' delivery fee has drifted, or was changed at some point) | supports bug 23, no new action |
+| 47 | Q7 | info | Confirmed live against a real **approved** partner account: navigating to `/partner/apply` correctly redirects straight to `/partner/dashboard` (bug 37's fix). Dashboard itself renders cleanly — stats, empty order history, no leftover payout UI | closed |
+| 48 | Q6 (admin/engine) | major | Two real subscription-generated orders (`SUB26100700011`, `SUB26100100010`) show their `order_items` priced at **₹0.00** each (Choco Chill, Apple Sprout) despite a correct nonzero order total (₹399). This is data produced by the admin's "generate orders now" engine, not mobile code — flagging it here since it surfaced while reading real order history, not something this session caused or can fix from the mobile side | needs-decision — admin/engine-side investigation, out of this file's normal scope but too concrete to not record |
+| 49 | Q2 | needs-decision | The "Smoothies" category chip renders on Home/Explore with full artwork but has **zero available products** — tapping it is a dead end ("No Products Yet"). Graceful, not a crash, but it invites a customer into an empty aisle. The `20261004100000_category_management.sql` migration appears intended to deactivate/remove an empty smoothies category, but the live category is still active | needs-decision — either add products, deactivate the category, or confirm the migration should be (re-)applied |
+| 50 | Q2 (a11y) | minor | The cart screen's trash/remove icon button has no accessible label (`find` by role/name turned up nothing even though the icon is clearly clickable) — same likely true of other icon-only buttons across the app, this is just the first one directly confirmed | open — candidate for the Q12 cross-cutting accessibility pass rather than a one-off fix |
 | 22 | Q3 | info | T15 (PDP rating display) was already implemented — the PDP shows stars + "4.9 (81 reviews)". The earlier audit note was wrong | closed — see TASK_PLAN T15 |
 
 Severity guide: **blocker** (crashes, data loss, can't complete a core flow) · **major** (feature
@@ -489,6 +503,93 @@ user data and payments-adjacent flows.
 ---
 
 ## 📝 SESSION LOG
+
+### 2026-10-07 — Q2 complete (Home), fully live-verified with the real account
+
+Went through the entire Home screen against real data — nothing left as a code-review-only check:
+- **Banners**: Birthday banner correctly absent (not the exact day); DOB-nudge correctly absent
+  (DOB is set on this profile); Offers banner correctly absent (no active non-birthday coupon
+  exists) — all three behave exactly as their code says they should, confirming the Q8 banner fixes
+  didn't regress anything.
+- **Partner banner**: shows "MGC Partner / Place a business order" for this real approved partner;
+  tapping it correctly reaches the disabled "Business Ordering Unavailable" screen (confirms the Q7
+  loading-state fix also works for the signed-in path, not just signed-out).
+- **Business CTA chip deep link**: tapped "Restaurants" → `/partner/apply?type=restaurant` →
+  correctly redirected to `/partner/dashboard` for this existing partner (confirms bug 37's fix
+  and the T13/T14 deep link mechanic both work together correctly).
+- **Find Your Blend** and **Signature Product**: both fully populated with real tea-blend data.
+  Add to Cart on the Signature Product card was tested for real — item appeared in `/cart` at the
+  correct price, then removed via the trash icon, confirming both the add path and the cart's
+  empty-state return.
+- **Header badges**: notification bell correctly shows an unread dot (real unread notifications
+  exist); cart badge correctly shows nothing when the cart is empty.
+- **New findings**: bug 49 (an active "Smoothies" category with zero products is a dead-end tap)
+  and bug 50 (the cart's trash icon has no accessible label — likely the first of several
+  icon-only buttons missing one, worth a dedicated pass in Q12 rather than fixing ad hoc here).
+
+**Next session:** Q10 (Profile & Account) is a natural next step — Q11 (content) and Q12+
+(cross-cutting) remain, plus the admin-write and OTP items still blocked pending the user.
+
+### 2026-10-07 — Real test account unblocked Q1/Q4/Q5/Q6/Q7/Q9 live verification
+
+Mid-Q8, discovered a real, already-authenticated Supabase session (`shyamalfred@gmail.com` — the
+user's own account, confirmed with them directly) persisted in this dev server's browser storage.
+The user gave explicit permission to use it for write-testing, understanding that test data would
+land in their real production history with no way for me to delete it afterward (no admin access).
+
+**What this unblocked, all live-verified with real data:**
+- **Q8**: both discount-banner queries confirmed against the 2 real live birthday coupons; found
+  and fixed a real bug (bug 42 — banners could advertise an invalid coupon). Tap-to-copy confirmed
+  working (clipboard write landed).
+- **Q4 + Q5**: placed one real test pre-order end-to-end — cart (pre-existing item + a test add) →
+  invalid-coupon rejection → address selection (4 real saved addresses existed) → place → success
+  screen → Orders list → order detail. The restored PRE-ORDER pill and Type row (Q5's fix) both
+  confirmed correct. Also opened a genuinely Delivered historical order and confirmed the full
+  5-step status tracker renders correctly.
+- **Q6**: Pause → Resume round-trip on a real active "Starter" subscription, both succeeded cleanly,
+  restored to Active afterward.
+- **Q7**: confirmed the existing-application redirect (bug 37's fix) against a real **approved**
+  partner account — `/partner/apply` correctly bounces to `/partner/dashboard`, which itself renders
+  cleanly with no leftover payout UI.
+- **Q9 (not yet formally started, but forced by this account's real history)**: found and fixed a
+  **real, confirmed bug** — tapping any notification in the in-app inbox never navigated anywhere; it
+  just silently re-rendered the inbox. Root cause: `routeFromNotificationData` checked for a `type`
+  field inside the notification's `data` jsonb blob, but `type` is actually a separate column on the
+  row. Fixed by passing both explicitly; verified live that a tap now opens the correct order.
+- **Q1**: session persists correctly across a fresh root load — confirmed with this real session.
+
+**Still not verifiable:** the actual OTP code-entry step (needs the user to read and type a real
+email code — not something I can do), and the admin-side status-change → push/notification path
+(needs admin credentials, separate from this mobile account).
+
+**A safety note for future sessions:** mid-check, the page navigated on its own between my commands
+a few times. Cause: the Browser pane was visible to the user and they were navigating the same live
+tab concurrently. Not a bug — just worth remembering that a visible pane can be driven by the user
+at the same time as automation, and batching related steps into one `browser_batch` call reduces
+the race window.
+
+### 2026-10-07 — Q7 started (partner / B2B)
+
+**Found and fixed two real bugs, live-verified (Expo web preview, port 8091, needed a `--clear` restart
+twice for bundle changes to actually take effect — noted here again since it keeps recurring):**
+- `partner/apply.tsx` had no existing-application check. Since `partners.profile_id` is uniquely
+  constrained, re-submitting hit a raw duplicate-key Postgres error. This became more likely once T13/T14
+  added direct links into this form (Business CTA chips, Women Who Grow) that bypass the Profile menu's
+  status-aware routing. Added an on-mount check that redirects an existing applicant to `/partner/submitted`
+  (pending) or `/partner/dashboard` (approved/rejected) before the form renders. Also added the missing
+  signed-out guard (same `Screen`+`EmptyState` pattern as every other Q1–Q6 fix) — verified both live.
+- `partner/business-order.tsx`'s loader returned early when signed out without clearing `loading`, so the
+  screen spun forever instead of reaching the same "Business Ordering Unavailable" message every other
+  visitor sees (the form is disabled for everyone via a feature flag, so this only broke the signed-out
+  path specifically). Fixed and verified live.
+
+**Reviewed, no action:** `partner/submitted.tsx` (fully static) and the disabled `business-order.tsx` form
+behind its flag (solid error handling and rollback if it's ever re-enabled).
+
+**Not verified:** the actual KYC document upload round-trip (needs a session to pick a file and hit
+Storage) and the admin-side approve/reject → mobile status flip. Same test-account blocker as Q1/Q4/Q5.
+
+**Next session:** Q8 (offers & discounts).
 
 ### 2026-10-07 — Q6 started (subscriptions)
 

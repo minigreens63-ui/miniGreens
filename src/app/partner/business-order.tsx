@@ -41,7 +41,10 @@ export default function BusinessOrderScreen() {
 
   useEffect(() => {
     (async () => {
-      if (!session) return;
+      if (!session) {
+        setLoading(false);
+        return;
+      }
       const [{ data: partnerData }, { data: productData }] = await Promise.all([
         supabase.from('partners').select('*').eq('profile_id', session.user.id).maybeSingle(),
         supabase.from('products').select('*').eq('is_available', true).order('name'),

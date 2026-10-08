@@ -221,7 +221,7 @@ function SignatureProductSection({ products, onProductPress }: { products: Retur
           <Image source={resolveImageSource(product.images[0])} style={signatureStyles.image} resizeMode="cover" />
         </View>
         <View style={signatureStyles.content}>
-          <Typography variant="caption" weight="bold" color={colors.secondary} style={{ letterSpacing: 1, fontSize: 9 }}>
+          <Typography variant="caption" weight="bold" color={colors.primaryLight} style={{ letterSpacing: 1, fontSize: 9 }}>
             OUR SIGNATURE PRODUCT
           </Typography>
           <Typography variant="h3" color={colors.textInverse} style={{ marginTop: spacing.xs }}>
@@ -257,7 +257,7 @@ const signatureStyles = StyleSheet.create({
   card: {
     borderRadius: borderRadius.cardLarge,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.green[800],
     flexDirection: 'row',
     minHeight: 180,
   },
@@ -525,13 +525,22 @@ function OffersBanner() {
     queryFn: async () => {
       const { data } = await supabase
         .from('discounts')
-        .select('code, discount_type, value')
+        .select('code, discount_type, value, starts_at, expires_at, usage_limit, used_count')
         .eq('is_active', true)
         .eq('is_birthday_offer', false)
         .order('value', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
+        .limit(20);
+      const now = Date.now();
+      // Same validity rules as /offers — filter in JS since "top by value" alone can
+      // surface a code that's expired, not started yet, or past its usage cap.
+      return (
+        (data ?? []).find((d) => {
+          if (d.starts_at && new Date(d.starts_at).getTime() > now) return false;
+          if (d.expires_at && new Date(d.expires_at).getTime() < now) return false;
+          if (d.usage_limit != null && d.used_count >= d.usage_limit) return false;
+          return true;
+        }) ?? null
+      );
     },
   });
 
@@ -610,12 +619,19 @@ function BirthdayBanner() {
     queryFn: async () => {
       const { data } = await supabase
         .from('discounts')
-        .select('code, description')
+        .select('code, description, starts_at, expires_at, usage_limit, used_count')
         .eq('is_birthday_offer', true)
         .eq('is_active', true)
-        .limit(1)
-        .maybeSingle();
-      return data;
+        .limit(20);
+      const now = Date.now();
+      return (
+        (data ?? []).find((d) => {
+          if (d.starts_at && new Date(d.starts_at).getTime() > now) return false;
+          if (d.expires_at && new Date(d.expires_at).getTime() < now) return false;
+          if (d.usage_limit != null && d.used_count >= d.usage_limit) return false;
+          return true;
+        }) ?? null
+      );
     },
   });
 
@@ -758,6 +774,7 @@ const partnerStyles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
     marginBottom: spacing.lg,
     padding: spacing.md,
     borderRadius: borderRadius.lg,

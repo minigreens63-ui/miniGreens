@@ -88,7 +88,7 @@ export default function NotificationsScreen() {
         .eq('id', n.id);
       invalidate();
     }
-    routeFromNotificationData(n.data);
+    routeFromNotificationData(n.type, n.data);
   }
 
   if (!session) {

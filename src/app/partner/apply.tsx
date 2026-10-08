@@ -10,6 +10,9 @@ import { Typography } from '../../components/ui/Typography';
 import { TextField } from '../../components/ui/TextField';
 import { Button } from '../../components/ui/Button';
 import { Chip } from '../../components/ui/Chip';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { Loading } from '../../components/ui/Loading';
+import { Screen } from '../../components/layout/Screen';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import type { PartnerBusinessType, KycDocument } from '../../types/database';
@@ -46,6 +49,31 @@ export default function PartnerApplyScreen() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checkingExisting, setCheckingExisting] = useState(true);
+
+  React.useEffect(() => {
+    if (!session) {
+      setCheckingExisting(false);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from('partners')
+      .select('status')
+      .eq('profile_id', session.user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data) {
+          router.replace(data.status === 'pending' ? '/partner/submitted' : '/partner/dashboard');
+          return;
+        }
+        setCheckingExisting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   const handleAddDocument = async () => {
     if (!session) {
@@ -114,6 +142,24 @@ export default function PartnerApplyScreen() {
     }
     router.replace('/partner/submitted');
   };
+
+  if (!session) {
+    return (
+      <Screen title="Become a Partner" scroll={false}>
+        <EmptyState
+          icon="briefcase-outline"
+          title="Log in to apply"
+          message="Sell MGC products, take orders, and grow your own business through the app."
+          actionLabel="Log In"
+          onAction={() => router.push('/auth/login')}
+        />
+      </Screen>
+    );
+  }
+
+  if (checkingExisting) {
+    return <Loading fullScreen />;
+  }
 
   return (
     <KeyboardAvoidingView

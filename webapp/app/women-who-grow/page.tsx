@@ -45,16 +45,14 @@ export default function WomenWhoGrowPage() {
       eyebrow="Women entrepreneurship"
       title="Women Who Grow, Families That Rise"
       intro="In many homes, a woman is the one who holds everything together. We believe she should also have the chance to build something for herself."
+      badge={
+        <span className="inline-flex items-center gap-2 rounded-full bg-(--color-leaf) px-5 py-2 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(31,58,36,0.25)]">
+          <span className="font-serif-display text-base">Sumam</span>
+          <span className="text-white/80">· MGC&apos;s women entrepreneurship program</span>
+        </span>
+      }
     >
       <div className="space-y-16 pb-16">
-        {/* Sumam badge — sits right under the page title/intro from PageShell */}
-        <div className="flex justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-(--color-leaf)/30 bg-(--color-cream) px-5 py-2 text-sm font-semibold text-(--color-forest)">
-            <span className="font-serif-display text-base text-(--color-leaf)">Sumam</span>
-            <span className="text-(--color-forest)/60">· MGC&apos;s women entrepreneurship program</span>
-          </span>
-        </div>
-
         {/* Hero image */}
         <figure>
           <div className="overflow-hidden rounded-3xl shadow-[0_12px_40px_rgba(31,58,36,0.18)]">
