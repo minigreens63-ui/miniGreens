@@ -6,7 +6,11 @@
     "dev": "next dev -p 4001",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -14,7 +18,7 @@
     "@supabase/supabase-js": "^2.112.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
-    "next": "16.2.10",
+    "next": "^16.4.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.9.2",
@@ -22,6 +26,7 @@
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.9",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -29,7 +34,9 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "null-loader": "^4.0.1",
+    "patch-package": "^8.0.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.149.0"
   }
 }
