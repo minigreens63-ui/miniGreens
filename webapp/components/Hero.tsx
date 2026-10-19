@@ -59,7 +59,7 @@ export function Hero() {
 
         <div className="relative mx-auto aspect-[3/2] w-full max-w-xl lg:max-w-none">
           <Image
-            src="/images/tea-hero-website.png"
+            src="/images/tea-hero-website.webp"
             alt="A glass cup of microgreen tea beside a Mini Greens Microgreen Tea box"
             fill
             priority

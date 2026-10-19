@@ -76,7 +76,7 @@ export default function ContactPage() {
           <div className="relative">
             <div className="relative aspect-[16/11] overflow-hidden rounded-3xl shadow-[0_8px_32px_rgba(31,58,36,0.12)]">
               <Image
-                src="/images/journal/grow-room.png"
+                src="/images/journal/grow-room.webp"
                 alt="Shelves of microgreen trays in the Mini Greens growing room"
                 fill
                 priority
@@ -138,7 +138,7 @@ export default function ContactPage() {
           <div className="relative flex flex-col overflow-hidden rounded-3xl bg-(--color-forest) p-8 text-white md:p-10">
             <div
               aria-hidden="true"
-              className="absolute inset-0 bg-[url('/images/leaf-bg.png')] bg-cover bg-center opacity-25 mix-blend-luminosity"
+              className="absolute inset-0 bg-[url('/images/leaf-bg.webp')] bg-cover bg-center opacity-25 mix-blend-luminosity"
             />
             <div className="relative">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-(--color-sun)">

@@ -31,7 +31,7 @@ const BRAND_POSTS: JournalPost[] = [
     category: "Farm",
     excerpt:
       "Mini Greens started with a personal search for real, fresh nutrition in a busy city. Here is how that turned into India's first microgreens brand.",
-    image: "/images/journal/broccoli-microgreens.png",
+    image: "/images/journal/broccoli-microgreens.webp",
     imageAlt: "A bowl of fresh microgreens on a sunlit counter",
     body: [
       {
@@ -66,7 +66,7 @@ const BRAND_POSTS: JournalPost[] = [
     category: "Nutrition",
     excerpt:
       "A handful of broccoli microgreens carries a concentration of sulforaphane you would struggle to match with a whole head of broccoli. Here's what the research actually says.",
-    image: "/images/journal/broccoli-microgreens.png",
+    image: "/images/journal/broccoli-microgreens.webp",
     imageAlt: "A bowl of broccoli microgreens beside a whole head of broccoli on a sunlit counter",
     body: [
       {
@@ -107,7 +107,7 @@ const BRAND_POSTS: JournalPost[] = [
     category: "Kitchen",
     excerpt:
       "Most people lose their greens to condensation, not time. A paper towel and the right shelf in your fridge will get you three extra days.",
-    image: "/images/journal/keep-fresh.png",
+    image: "/images/journal/keep-fresh.webp",
     imageAlt: "A glass container of fresh microgreens on a folded paper towel on a fridge shelf",
     body: [
       {
@@ -152,7 +152,7 @@ const BRAND_POSTS: JournalPost[] = [
     category: "Kitchen",
     excerpt:
       "Beyond the salad bowl: folded into an omelette, wilted through hot dal, blitzed into a pesto that keeps for a fortnight.",
-    image: "/images/journal/pea-shoots.png",
+    image: "/images/journal/pea-shoots.webp",
     imageAlt: "A golden omelette topped with fresh pea shoots on a cream plate",
     body: [
       {
@@ -209,7 +209,7 @@ const BRAND_POSTS: JournalPost[] = [
     category: "Farm",
     excerpt:
       "Reusable trays, a closed-loop water system, and the parts of our operation we're still not happy with.",
-    image: "/images/home/farm-hands.png",
+    image: "/images/home/farm-hands.webp",
     imageAlt: "Hands holding a freshly harvested clump of pea shoots in the greenhouse",
     body: [
       {
@@ -255,7 +255,7 @@ const BRAND_POSTS: JournalPost[] = [
     category: "Farm",
     excerpt:
       "Growing under lights doesn't mean ignoring the seasons. Our rotation still follows what grows best, and when.",
-    image: "/images/journal/grow-room.png",
+    image: "/images/journal/grow-room.webp",
     imageAlt: "Shelves of microgreen trays under soft grow lights in a bright indoor grow room",
     body: [
       {

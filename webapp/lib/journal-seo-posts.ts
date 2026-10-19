@@ -511,7 +511,7 @@ export const SEO_JOURNAL_POSTS: JournalPost[] = [
     category: "Farm",
     excerpt:
       "How a woman can start a home microgreens business in India: what to learn, what to grow, how to sell, and where Mini Greens fits in.",
-    image: "/images/women-who-grow/hero.png",
+    image: "/images/women-who-grow/hero.webp",
     imageAlt: "A woman tending trays of fresh microgreens on a wooden shelf at home",
     body: [
       p("Many women in India want an income that fits around their family and their home. Microgreens can be a good place to start. They grow in a small space, need no land, and are ready to sell in about a week or two. This guide explains how to begin, and what to learn along the way."),

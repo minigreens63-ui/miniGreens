@@ -15,7 +15,7 @@ type Slide = {
 
 const SLIDES: Slide[] = [
   {
-    image: "/images/hero/hero-kitchen-pour.png",
+    image: "/images/hero/hero-kitchen-pour.webp",
     alt: "Pouring fresh microgreen tea beside a Mini Greens kraft tube on a sunlit kitchen counter",
     eyebrow: "Brewed Fresh Daily",
     title: "Poured Fresh, Every Morning",
@@ -23,7 +23,7 @@ const SLIDES: Slide[] = [
       "Steep our Green Detox microgreen tea and start the day clean, calm, and caffeine-free.",
   },
   {
-    image: "/images/hero/hero-green-shadow.png",
+    image: "/images/hero/hero-green-shadow.webp",
     alt: "Mini Greens microgreen tea tube on a marble pedestal against a deep green shadowed wall",
     eyebrow: "Microgreens in Every Cup",
     title: "Our Most Loved Greens",
@@ -31,7 +31,7 @@ const SLIDES: Slide[] = [
       "Premium microgreen tea blends grown with care, for a healthier, brighter you.",
   },
   {
-    image: "/images/hero/hero-flatlay-cream.png",
+    image: "/images/hero/hero-flatlay-cream.webp",
     alt: "Mini Greens tube surrounded by fresh pea, radish, broccoli and sunflower microgreens on a cream flat lay",
     eyebrow: "Nourish. Sip. Thrive.",
     title: "Small Greens, Big Benefits",
@@ -39,7 +39,7 @@ const SLIDES: Slide[] = [
       "Pea, radish, broccoli and sunflower microgreens, sun-dried and blended into every teabag.",
   },
   {
-    image: "/images/hero/hero-stone-steps.png",
+    image: "/images/hero/hero-stone-steps.webp",
     alt: "Mini Greens tube displayed on stone steps surrounded by potted microgreens",
     eyebrow: "Farm To Cup",
     title: "Rooted In Nature",

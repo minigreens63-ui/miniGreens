@@ -6,35 +6,35 @@
 // Microgreens and drinks use the white-background set in products/white/
 // (Kling renders, see IMAGE_PROMPTS.md).
 const LOCAL_IMAGE_BY_SLUG: Record<string, string> = {
-  "carrot-lemon-radish-microgreens-juice": "/images/products/white/carrot-lemon-radish-juice.jpg",
-  "cucumber-splash": "/images/products/white/cucumber-splash.png",
-  "apple-sprout": "/images/products/white/apple-sprout.png",
-  "sweet-lime-spark": "/images/products/white/sweet-lime-spark.png",
-  "watermelon-fresh": "/images/products/white/watermelon-fresh.png",
-  "pink-radish": "/images/products/white/pink-radish.png",
-  "white-radish": "/images/products/white/white-radish.png",
-  wheatgrass: "/images/products/white/wheatgrass.png",
-  beetroot: "/images/products/white/beetroot.png",
-  "pak-choi": "/images/products/white/pak-choi.png",
-  sunflower: "/images/products/white/sunflower.png",
-  mustard: "/images/products/white/mustard.png",
-  fenugreek: "/images/products/white/fenugreek.png",
-  broccoli: "/images/products/white/broccoli.png",
-  arugula: "/images/products/white/arugula.png",
-  turnip: "/images/products/white/turnip.png",
-  "red-amaranth": "/images/products/white/red-amaranth.png",
-  "red-cabbage": "/images/products/white/red-cabbage.png",
+  "carrot-lemon-radish-microgreens-juice": "/images/products/white/carrot-lemon-radish-juice.webp",
+  "cucumber-splash": "/images/products/white/cucumber-splash.webp",
+  "apple-sprout": "/images/products/white/apple-sprout.webp",
+  "sweet-lime-spark": "/images/products/white/sweet-lime-spark.webp",
+  "watermelon-fresh": "/images/products/white/watermelon-fresh.webp",
+  "pink-radish": "/images/products/white/pink-radish.webp",
+  "white-radish": "/images/products/white/white-radish.webp",
+  wheatgrass: "/images/products/white/wheatgrass.webp",
+  beetroot: "/images/products/white/beetroot.webp",
+  "pak-choi": "/images/products/white/pak-choi.webp",
+  sunflower: "/images/products/white/sunflower.webp",
+  mustard: "/images/products/white/mustard.webp",
+  fenugreek: "/images/products/white/fenugreek.webp",
+  broccoli: "/images/products/white/broccoli.webp",
+  arugula: "/images/products/white/arugula.webp",
+  turnip: "/images/products/white/turnip.webp",
+  "red-amaranth": "/images/products/white/red-amaranth.webp",
+  "red-cabbage": "/images/products/white/red-cabbage.webp",
 
   // Microgreen tea blends: lifestyle photography (with background) of the tube
   // artwork, shared with the mobile app.
-  "green-vitality-bag": "/images/tea/blends/green-vitality.png",
-  "green-lemon-bag": "/images/tea/blends/green-lemon.png",
-  "green-detox-bag": "/images/tea/blends/green-detox.png",
-  "green-masala-bag": "/images/tea/blends/green-masala.png",
-  "mint-green-bag": "/images/tea/blends/mint-green.png",
-  "green-apple-bag": "/images/tea/blends/green-apple.png",
-  "ginger-green-bag": "/images/tea/blends/ginger-green.png",
-  "green-hibiscus-bag": "/images/tea/blends/green-hibiscus.png",
+  "green-vitality-bag": "/images/tea/blends/green-vitality.webp",
+  "green-lemon-bag": "/images/tea/blends/green-lemon.webp",
+  "green-detox-bag": "/images/tea/blends/green-detox.webp",
+  "green-masala-bag": "/images/tea/blends/green-masala.webp",
+  "mint-green-bag": "/images/tea/blends/mint-green.webp",
+  "green-apple-bag": "/images/tea/blends/green-apple.webp",
+  "ginger-green-bag": "/images/tea/blends/ginger-green.webp",
+  "green-hibiscus-bag": "/images/tea/blends/green-hibiscus.webp",
 };
 
 // Extra gallery angles for the product detail page, keyed by slug. The first
@@ -45,9 +45,9 @@ const GALLERY_EXTRAS_BY_SLUG: Record<string, string[]> = {
 };
 
 const LOCAL_CATEGORY_IMAGE_BY_SLUG: Record<string, string> = {
-  juices: "/images/products/category-juices.jpeg",
-  microgreens: "/images/products/category-microgreens-sage.jpg",
-  "tea-blends": "/images/tea/blends/green-vitality.png",
+  juices: "/images/products/category-juices.webp",
+  microgreens: "/images/products/category-microgreens-sage.webp",
+  "tea-blends": "/images/tea/blends/green-vitality.webp",
 };
 
 /**
@@ -89,11 +89,11 @@ export function resolveCategoryImage(
 // ~70% of their frame) it leaves so much white margin the card looks empty/oversized.
 // Zoom these specifically so the bottle fills the card like everything else does.
 const BOTTLE_IMAGE_FILENAMES = new Set([
-  "apple-sprout.png",
-  "cucumber-splash.png",
-  "sweet-lime-spark.png",
-  "watermelon-fresh.png",
-  "carrot-lemon-radish-juice.jpg",
+  "apple-sprout.webp",
+  "cucumber-splash.webp",
+  "sweet-lime-spark.webp",
+  "watermelon-fresh.webp",
+  "carrot-lemon-radish-juice.webp",
 ]);
 
 /**

@@ -71,7 +71,7 @@ export function PartnerSection() {
         <div>
           <div className="relative aspect-[16/9] overflow-hidden rounded-2xl">
             <Image
-              src="/images/journal/grow-room.png"
+              src="/images/journal/grow-room.webp"
               alt="Shelves of microgreen trays growing under soft lights in a bright room"
               fill
               sizes="(min-width: 1024px) 50vw, 100vw"

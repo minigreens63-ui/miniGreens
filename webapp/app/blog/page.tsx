@@ -106,7 +106,7 @@ export default function BlogPage() {
       <section className="relative overflow-hidden bg-(--color-forest)">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[url('/images/leaf-bg.png')] bg-cover bg-center opacity-25 mix-blend-luminosity"
+          className="absolute inset-0 bg-[url('/images/leaf-bg.webp')] bg-cover bg-center opacity-25 mix-blend-luminosity"
         />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-6 px-6 py-12 text-white md:px-10 lg:flex-row lg:items-center lg:justify-between">
           <div>

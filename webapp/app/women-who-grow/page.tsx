@@ -57,7 +57,7 @@ export default function WomenWhoGrowPage() {
         <figure>
           <div className="overflow-hidden rounded-3xl shadow-[0_12px_40px_rgba(31,58,36,0.18)]">
             <Image
-              src="/images/women-who-grow/hero.png"
+              src="/images/women-who-grow/hero.webp"
               alt="A woman tending trays of fresh microgreens on a wooden shelf at home"
               width={2000}
               height={1129}

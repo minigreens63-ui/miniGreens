@@ -11,7 +11,7 @@ const BADGES = [
   { Icon: Truck, label: ["Freshly Cut &", "Delivered"] },
 ];
 
-const HERO_SRC = "/images/hero/hero-flatlay-cream.png";
+const HERO_SRC = "/images/hero/hero-flatlay-cream.webp";
 const HERO_MOBILE_SRC = "/images/hero/hero-tube-mobile.webp";
 const HERO_ALT = "Mini Greens Green Detox microgreen tea tube with a glass of tea and fresh microgreens";
 

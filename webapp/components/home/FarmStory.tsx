@@ -24,7 +24,7 @@ export function FarmStory() {
     <section>
       <div className="relative overflow-hidden bg-(--color-forest-deep)">
         <Image
-          src="/images/home/farm-hands.png"
+          src="/images/home/farm-hands.webp"
           alt="Hands holding a freshly harvested clump of pea-shoot microgreens in the greenhouse"
           fill
           sizes="100vw"

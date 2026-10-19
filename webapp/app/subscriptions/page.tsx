@@ -271,7 +271,7 @@ export default function SubscriptionsPage() {
         <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-x-6">
           <div className="relative lg:col-span-5">
             <TornPhoto
-              src="/images/journal/grow-room.png"
+              src="/images/journal/grow-room.webp"
               alt="Shelves of microgreen trays growing under soft lights"
               seed={97}
               tilt={-1.5}
@@ -325,7 +325,7 @@ export default function SubscriptionsPage() {
       {/* Closing band */}
       <section className="relative isolate h-[420px] overflow-hidden lg:h-[520px]">
         <Image
-          src="/images/home/farm-hands.png"
+          src="/images/home/farm-hands.webp"
           alt="Hands holding a freshly harvested clump of pea shoots in the greenhouse at golden hour"
           fill
           sizes="100vw"
