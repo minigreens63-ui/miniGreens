@@ -1,0 +1,153 @@
+.wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--color-cream);
+}
+
+.svg {
+  width: 120px;
+  height: 120px;
+  overflow: visible;
+}
+
+.soil {
+  fill: var(--color-cream-dark);
+}
+
+.stem {
+  fill: none;
+  stroke: var(--color-leaf);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: growStem 2.4s cubic-bezier(0.34, 1.2, 0.4, 1) infinite;
+}
+
+.leafLeft,
+.leafRight {
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+  animation: unfurl 2.4s cubic-bezier(0.34, 1.2, 0.4, 1) infinite;
+}
+
+.leafLeft {
+  fill: var(--color-forest);
+}
+
+.leafRight {
+  fill: var(--color-leaf);
+  transform-origin: 0% 100%;
+  animation-name: unfurlRight;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-forest);
+  opacity: 0;
+  animation: labelFade 2.4s ease-in-out infinite;
+}
+
+@keyframes growStem {
+  0%,
+  8% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  45% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  88% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+}
+
+@keyframes unfurl {
+  0%,
+  45% {
+    transform: scale(0) rotate(-25deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  88% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.85) rotate(-6deg);
+    opacity: 0;
+  }
+}
+
+@keyframes unfurlRight {
+  0%,
+  45% {
+    transform: scale(0) rotate(25deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  88% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.85) rotate(6deg);
+    opacity: 0;
+  }
+}
+
+@keyframes labelFade {
+  0%,
+  8% {
+    opacity: 0;
+  }
+  25%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stem,
+  .leafLeft,
+  .leafRight,
+  .label {
+    animation: none;
+  }
+  .stem {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  .leafLeft,
+  .leafRight {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  .label {
+    opacity: 1;
+  }
+}
