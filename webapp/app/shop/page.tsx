@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowDown, ArrowRight, Repeat } from "@phosphor-icons/react/dist/ssr";
 import { HomeProductCard } from "@/components/home/HomeProductCard";
 import { ShopFilterChips } from "@/components/ShopFilterChips";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { resolveProductImage } from "@/lib/productImages";
 import { categoryCopy } from "@/lib/categories";
 import { FOREST, Note, PAPER, TornEdge, TornPhoto, condensed, serif } from "@/components/story/primitives";
@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/shop" },
 };
 
+export const revalidate = 60;
+
 type ProductRow = {
   slug: string;
   name: string;
@@ -42,7 +44,7 @@ export default async function ShopPage({
   searchParams: Promise<{ category?: string; search?: string }>;
 }) {
   const { category, search } = await searchParams;
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
 
   const [{ data: categories }, { data: products }] = await Promise.all([
     supabase

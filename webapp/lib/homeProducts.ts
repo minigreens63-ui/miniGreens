@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { resolveProductImage } from "@/lib/productImages";
 
 export type HomeProduct = {
@@ -23,7 +23,7 @@ export const getHomeCatalog = cache(async (): Promise<{
   categories: { slug: string; name: string }[];
   products: HomeProduct[];
 }> => {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   const [{ data: categories }, { data: products }] = await Promise.all([
     // Admin-managed: hidden categories (and their products) stay off the homepage.
     supabase

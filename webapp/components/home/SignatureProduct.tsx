@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Coffee, Heart, Leaf, Repeat, Sparkle } from "@phosphor-icons/react/dist/ssr";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { AddToCartButton } from "@/components/home/AddToCartButton";
 import { ScriptNote } from "@/components/home/ScriptNote";
 
@@ -15,7 +15,7 @@ const PERKS = [
 ];
 
 export async function SignatureProduct() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   const { data: product } = await supabase
     .from("products")
     .select("price, is_available")
@@ -33,7 +33,7 @@ export async function SignatureProduct() {
       />
       <div className="absolute bottom-0 right-[2%] top-10 hidden w-[52%] sm:block">
         <Image
-          src="/images/tea/blends/green-detox.png"
+          src="/images/tea/blends/green-detox.webp"
           alt="Green Detox Microgreen Tea tube"
           fill
           sizes="52vw"
@@ -56,7 +56,7 @@ export async function SignatureProduct() {
       <div className="relative mx-auto flex min-h-0 max-w-7xl flex-col justify-center px-6 py-12 sm:min-h-[520px] sm:py-16 md:px-10">
         <div className="relative mx-auto mb-6 aspect-square w-full max-w-[220px] sm:hidden">
           <Image
-            src="/images/tea/blends/green-detox.png"
+            src="/images/tea/blends/green-detox.webp"
             alt="Green Detox Microgreen Tea tube"
             fill
             sizes="220px"

@@ -15,6 +15,8 @@ import { SubscriptionTeaser } from "@/components/SubscriptionTeaser";
 import { SITE_URL } from "@/lib/site";
 import { BRAND_CLAIM_SHORT, BRAND_OG_IMAGE } from "@/lib/brand";
 
+export const revalidate = 60;
+
 const TITLE = `Mini Greens Company | ${BRAND_CLAIM_SHORT}: Fresh Microgreens & Tea Blends`;
 const DESCRIPTION =
   `${BRAND_CLAIM_SHORT}. Shop farm-fresh microgreens and microgreen tea blends, harvested to order and delivered to your door. Pesticide-free, plastic-free, grown in Bangalore.`;

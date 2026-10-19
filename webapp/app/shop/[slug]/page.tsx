@@ -18,7 +18,7 @@ import { Gallery } from "@/components/pdp/Gallery";
 import { AddToCartPanel } from "@/components/pdp/AddToCartPanel";
 import { StickyAddToCart } from "@/components/pdp/StickyAddToCart";
 import { RatingSummary } from "@/components/pdp/RatingSummary";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { resolveProductGallery, resolveProductImage } from "@/lib/productImages";
 import { displayName } from "@/lib/productCopy";
 import { SHOW_RATINGS } from "@/lib/reviews";
@@ -37,8 +37,16 @@ type NutritionShape = {
 const SELECT =
   "slug, name, description, price, original_price, images, unit, weight, nutrition, benefits, ingredients, storage, consumption_tips, rating, review_count, tags, category_id";
 
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const supabase = createSupabasePublicClient();
+  const { data } = await supabase.from("products").select("slug").eq("is_available", true);
+  return (data ?? []).map((product) => ({ slug: product.slug }));
+}
+
 async function getProduct(slug: string) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   const { data: product } = await supabase
     .from("products")
     .select(SELECT)
