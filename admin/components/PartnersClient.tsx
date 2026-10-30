@@ -11,6 +11,7 @@ import {
   updatePartnerFee,
   updateKycStatus,
   createPartner,
+  invitePartner,
   searchProfilesForPartner,
 } from "@/app/dashboard/(protected)/partners/actions";
 
@@ -60,11 +61,15 @@ const BUSINESS_TYPE_OPTIONS: Partner["business_type"][] = [
   "community",
 ];
 
+type AddPartnerMode = "existing" | "invite";
+
 function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [mode, setMode] = useState<AddPartnerMode>("existing");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ProfileMatch[]>([]);
   const [searching, setSearching] = useState(false);
   const [profile, setProfile] = useState<ProfileMatch | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
   const [businessType, setBusinessType] = useState<Partner["business_type"]>("individual");
   const [businessName, setBusinessName] = useState("");
   const [contactPerson, setContactPerson] = useState("");
@@ -95,22 +100,52 @@ function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreate
   }
 
   function handleSubmit() {
-    if (!profile || !businessName.trim() || !contactPerson.trim() || !phone.trim()) {
-      setError("Pick an account and fill business name, contact person and phone.");
+    if (!businessName.trim() || !contactPerson.trim() || !phone.trim()) {
+      setError("Fill business name, contact person and phone.");
+      return;
+    }
+
+    if (mode === "existing") {
+      if (!profile) {
+        setError("Pick an existing account.");
+        return;
+      }
+      setError(null);
+      startTransition(async () => {
+        const { error: createError } = await createPartner({
+          profileId: profile.id,
+          businessType,
+          businessName: businessName.trim(),
+          contactPerson: contactPerson.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+        });
+        if (createError) {
+          setError(createError);
+          return;
+        }
+        onCreated();
+      });
+      return;
+    }
+
+    if (!inviteEmail.trim()) {
+      setError("Enter the email address to invite.");
       return;
     }
     setError(null);
     startTransition(async () => {
-      const { error: createError } = await createPartner({
-        profileId: profile.id,
+      const { error: inviteError } = await invitePartner({
+        email: inviteEmail.trim(),
+        fullName: contactPerson.trim(),
         businessType,
         businessName: businessName.trim(),
         contactPerson: contactPerson.trim(),
         phone: phone.trim(),
         address: address.trim(),
       });
-      if (createError) {
-        setError(createError);
+      if (inviteError) {
+        setError(inviteError);
         return;
       }
       onCreated();
@@ -129,39 +164,79 @@ function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreate
         </div>
 
         <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-              MGC account (search by name, email or phone)
-            </label>
-            <input
-              value={query}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search existing accounts..."
-              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-            />
-            {searching && <p className="mt-1 text-xs text-slate-400">Searching...</p>}
-            {results.length > 0 && (
-              <ul className="mt-2 max-h-40 overflow-y-auto rounded-xl border border-slate-100 divide-y divide-slate-50">
-                {results.map((p) => (
-                  <li key={p.id}>
-                    <button
-                      type="button"
-                      onClick={() => pickProfile(p)}
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50/50"
-                    >
-                      <span className="font-medium text-slate-800">{p.full_name}</span>{" "}
-                      <span className="text-slate-400 text-xs">{p.email ?? p.phone ?? ""}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {profile && (
-              <p className="mt-2 text-xs text-emerald-700">
-                Selected: {profile.full_name} ({profile.email ?? profile.phone})
-              </p>
-            )}
+          <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => setMode("existing")}
+              className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-colors ${
+                mode === "existing" ? "bg-white text-[#0A2416] shadow-sm" : "text-slate-500"
+              }`}
+            >
+              Has an account
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("invite")}
+              className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-colors ${
+                mode === "invite" ? "bg-white text-[#0A2416] shadow-sm" : "text-slate-500"
+              }`}
+            >
+              No account yet
+            </button>
           </div>
+
+          {mode === "existing" ? (
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                MGC account (search by name, email or phone)
+              </label>
+              <input
+                value={query}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search existing accounts..."
+                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+              {searching && <p className="mt-1 text-xs text-slate-400">Searching...</p>}
+              {results.length > 0 && (
+                <ul className="mt-2 max-h-40 overflow-y-auto rounded-xl border border-slate-100 divide-y divide-slate-50">
+                  {results.map((p) => (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => pickProfile(p)}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50/50"
+                      >
+                        <span className="font-medium text-slate-800">{p.full_name}</span>{" "}
+                        <span className="text-slate-400 text-xs">{p.email ?? p.phone ?? ""}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {profile && (
+                <p className="mt-2 text-xs text-emerald-700">
+                  Selected: {profile.full_name} ({profile.email ?? profile.phone})
+                </p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                Email to invite
+              </label>
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="partner@example.com"
+                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+              <p className="mt-2 text-xs text-slate-400">
+                They&apos;ll get an email invite and land signed in on the app once they open it — no
+                password needed.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
@@ -232,7 +307,13 @@ function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreate
             onClick={handleSubmit}
             className="w-full py-2.5 text-sm font-semibold rounded-xl bg-[#0A2416] text-white transition-all active:scale-[0.97] disabled:opacity-50"
           >
-            {isPending ? "Adding..." : "Add Partner"}
+            {isPending
+              ? mode === "invite"
+                ? "Sending invite..."
+                : "Adding..."
+              : mode === "invite"
+                ? "Send Invite"
+                : "Add Partner"}
           </button>
         </div>
       </div>
