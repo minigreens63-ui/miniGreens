@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,6 +15,7 @@ import {
   List,
   X,
   SignOut,
+  CircleNotch,
   Handshake,
   Tag,
   Stack,
@@ -40,6 +41,13 @@ const comingSoon: { label: string; icon: typeof Users }[] = [];
 export default function Sidebar({ email, isSuperAdmin }: { email: string; isSuperAdmin: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [isLoggingOut, startLogout] = useTransition();
+
+  function handleLogout() {
+    startLogout(async () => {
+      await logout();
+    });
+  }
   const initials = email ? email.slice(0, 2).toUpperCase() : "AD";
   const links = isSuperAdmin
     ? [...navLinks, { href: "/dashboard/admins", label: "Admins", icon: ShieldCheck, active: true }]
@@ -119,15 +127,19 @@ export default function Sidebar({ email, isSuperAdmin }: { email: string; isSupe
             <p className="text-sm font-semibold text-slate-800 truncate">Admin</p>
             <p className="text-xs text-slate-400 truncate">{email || "Not signed in"}</p>
           </div>
-          <form action={logout}>
-            <button
-              type="submit"
-              aria-label="Sign out"
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors flex-shrink-0"
-            >
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            aria-label="Sign out"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors flex-shrink-0 disabled:opacity-50"
+          >
+            {isLoggingOut ? (
+              <CircleNotch size={16} className="animate-spin" />
+            ) : (
               <SignOut size={16} />
-            </button>
-          </form>
+            )}
+          </button>
         </div>
       </div>
     </div>
