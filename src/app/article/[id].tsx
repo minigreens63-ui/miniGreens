@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -44,7 +45,7 @@ export default function ArticleScreen() {
     <Screen title={article.category}>
       {/* Hero image */}
       <Animated.View entering={FadeInUp.springify().damping(34).mass(1).stiffness(100)} style={styles.heroWrap}>
-        <Image source={resolveImageSource(article.image)} style={styles.heroImage} resizeMode="cover" />
+        <Image source={resolveImageSource(article.image)} style={styles.heroImage} contentFit="cover" />
         <LinearGradient
           colors={['rgba(29,43,32,0)', 'rgba(29,43,32,0.82)']}
           locations={[0.35, 1]}
@@ -113,7 +114,7 @@ export default function ArticleScreen() {
               }}
               accessibilityLabel={a.title}
             >
-              <Image source={resolveImageSource(a.image)} style={styles.moreThumb} resizeMode="cover" />
+              <Image source={resolveImageSource(a.image)} style={styles.moreThumb} contentFit="cover" />
               <View style={{ flex: 1 }}>
                 <Typography variant="caption" color={colors.primary} weight="semibold" uppercase>
                   {a.category}

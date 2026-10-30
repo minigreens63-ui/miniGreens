@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +12,12 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useCartStore, cartSubtotal } from '../store/useCartStore';
-import { resolveImageSource, getProductPlaceholder } from '../utils/placeholders';
+import { resolveImageSource } from '../utils/placeholders';
+import { PlaceholderImage } from '../components/ui/PlaceholderImage';
+
+// Must match `DELIVERY_FEE` in checkout/index.tsx — shown here so the cart
+// total isn't a surprise once the user reaches checkout.
+const DELIVERY_FEE = 40;
 
 export default function CartScreen() {
   const insets = useSafeAreaInsets();
@@ -29,6 +35,7 @@ export default function CartScreen() {
             router.back();
           }}
           style={styles.headerButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -51,10 +58,14 @@ export default function CartScreen() {
               <Animated.View key={item.productId} entering={FadeInUp.delay(i * 60).springify().damping(31).mass(1).stiffness(100)}>
                 <Card style={styles.itemCard} padding="lg">
                   <View style={styles.itemRow}>
-                    <Image
-                      source={resolveImageSource(item.image ?? getProductPlaceholder(item.name))}
-                      style={styles.itemImage}
-                    />
+                    {item.image ? (
+                      <Image
+                        source={resolveImageSource(item.image)}
+                        style={styles.itemImage}
+                      />
+                    ) : (
+                      <PlaceholderImage label={item.name} style={styles.itemImage} />
+                    )}
                     <View style={styles.itemInfo}>
                       <Typography variant="bodySmall" weight="semibold" numberOfLines={1}>
                         {item.name}
@@ -66,6 +77,7 @@ export default function CartScreen() {
                         <TouchableOpacity
                           style={styles.qtyButton}
                           onPress={() => updateQuantity(item.productId, item.quantity - 1)}
+                          accessibilityLabel={`Decrease quantity of ${item.name}`}
                         >
                           <Ionicons name="remove" size={16} color={colors.primaryDark} />
                         </TouchableOpacity>
@@ -75,12 +87,17 @@ export default function CartScreen() {
                         <TouchableOpacity
                           style={styles.qtyButton}
                           onPress={() => updateQuantity(item.productId, item.quantity + 1)}
+                          accessibilityLabel={`Increase quantity of ${item.name}`}
                         >
                           <Ionicons name="add" size={16} color={colors.primaryDark} />
                         </TouchableOpacity>
                       </View>
                     </View>
-                    <TouchableOpacity onPress={() => removeItem(item.productId)} style={styles.removeButton}>
+                    <TouchableOpacity
+                      onPress={() => removeItem(item.productId)}
+                      style={styles.removeButton}
+                      accessibilityLabel={`Remove ${item.name} from cart`}
+                    >
                       <Ionicons name="trash-outline" size={18} color={colors.error} />
                     </TouchableOpacity>
                   </View>
@@ -92,7 +109,15 @@ export default function CartScreen() {
           <Animated.View entering={FadeInUp.springify().damping(31).mass(1).stiffness(100)} style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={styles.subtotalRow}>
               <Typography variant="body" color={colors.textSecondary}>Subtotal</Typography>
-              <Typography variant="h4" color={colors.primaryDark}>₹{subtotal.toFixed(2)}</Typography>
+              <Typography variant="body" color={colors.text}>₹{subtotal.toFixed(2)}</Typography>
+            </View>
+            <View style={styles.subtotalRow}>
+              <Typography variant="body" color={colors.textSecondary}>Delivery Fee</Typography>
+              <Typography variant="body" color={colors.text}>₹{DELIVERY_FEE.toFixed(2)}</Typography>
+            </View>
+            <View style={styles.subtotalRow}>
+              <Typography variant="body" weight="semibold" color={colors.text}>Total</Typography>
+              <Typography variant="h4" color={colors.primaryDark}>₹{(subtotal + DELIVERY_FEE).toFixed(2)}</Typography>
             </View>
             <Button
               title="Proceed to Checkout"

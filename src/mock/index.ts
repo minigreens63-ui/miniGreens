@@ -1,4 +1,4 @@
-import { Product, Category, Banner, LifestyleArticle, Testimonial, SubscriptionPlan, Order, Address, Profile, FAQ } from '../types';
+import { Product, Category, Banner, LifestyleArticle, Testimonial } from '../types';
 
 // Product images
 const wheatgrassImg = require('../assets/wheatgrass.png');
@@ -34,11 +34,6 @@ const articleMorningRitualsImg = require('../assets/article-morning-rituals.png'
 const articleSustainableSippingImg = require('../assets/article-sustainable-sipping.png');
 
 // SVG placeholder generator - works without network
-function ph(name: string, color: string, w = 400, h = 400): string {
-  const s = name.replace(/["<>&]/g, '');
-  const c = color || '#6f8f4a';
-  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="${c}"/><rect x="${w*0.05}" y="${h*0.05}" width="${w*0.9}" height="${h*0.9}" rx="${w*0.04}" fill="rgba(255,255,255,0.1)"/><text x="${w/2}" y="${h*0.5}" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="${Math.min(w,h)*0.15}" font-weight="bold" font-family="system-ui">${s[0]||'?'}</text><text x="${w/2}" y="${h*0.65}" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="${Math.min(w,h)*0.045}" font-family="system-ui">${s}</text></svg>`;
-}
 function avatarPh(name: string): string {
   const s = name[0]?.toUpperCase() || '?';
   return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><circle cx="100" cy="100" r="100" fill="%236f8f4a"/><text x="100" y="125" text-anchor="middle" fill="white" font-size="80" font-weight="bold" font-family="system-ui">${s}</text></svg>`;
@@ -138,59 +133,6 @@ export const testimonials: Testimonial[] = [
   { id: 'test-2', name: 'Rohan Mehta', avatar: avatarPh('R'), role: 'Fitness Enthusiast', content: 'The Choco Chill changed my post-workout game. Tastes like dessert but packed with protein. I\'m hooked.', rating: 5 },
   { id: 'test-3', name: 'Ananya Patel', avatar: avatarPh('A'), role: 'Busy Mom', content: 'Finally, healthy drinks my kids actually love! The Apple Sprout and Strawberry Banana Glow are household favorites.', rating: 5 },
   { id: 'test-4', name: 'Vikram Rao', avatar: avatarPh('V'), role: 'Chef', content: 'As a chef, I appreciate the freshness. The Carrot, Lemon & Radish Microgreens Juice is bold and beautifully balanced.', rating: 5 },
-];
-
-export const subscriptionPlans: SubscriptionPlan[] = [
-  { id: 'sub-1', name: 'Starter', description: 'Perfect for individuals starting their wellness journey', price: 399, unit: 'week', deliveryFrequency: 'Weekly', items: ['3 juices of your choice', 'Free delivery'], benefits: ['Free delivery', 'Flexible skip', 'Cancel anytime'], isPopular: false, color: '#6f8f4a' },
-  { id: 'sub-2', name: 'Wellness', description: 'Our most popular plan for daily freshness', price: 699, unit: 'week', deliveryFrequency: 'Weekly', items: ['7 juices of your choice', '1 seasonal special'], benefits: ['Free delivery', 'Priority support', 'Exclusive recipes', 'Cancel anytime'], isPopular: true, color: '#6f8f4a' },
-  { id: 'sub-3', name: 'Family', description: 'Complete freshness for the whole family', price: 1199, unit: 'week', deliveryFrequency: 'Weekly', items: ['12 juices of your choice', '2 seasonal specials', 'Family-size portions'], benefits: ['Free delivery', 'Priority support', '15% off add-ons', 'Family recipes', 'Cancel anytime'], isPopular: false, color: '#6f8f4a' },
-  { id: 'sub-4', name: 'Active Greens Box', description: 'Curated microgreens box for the health-conscious — fresh, vibrant, and nutrient-dense', price: 499, unit: 'week', deliveryFrequency: 'Weekly', items: ['3 microgreens of your choice', '1 seasonal special', 'Care instructions & recipes'], benefits: ['Free delivery', 'Flexible skip', 'Cancel anytime'], isPopular: false, color: '#6f8f4a' },
-  { id: 'sub-5', name: 'Golden Years Box', description: 'Nourishing microgreens crafted for senior wellness — gentle on digestion, big on nutrition', price: 599, unit: 'week', deliveryFrequency: 'Weekly', items: ['2 nutrient-dense microgreens', '1 wellness shot pack', 'Senior-friendly recipes'], benefits: ['Free delivery', 'Flexible skip', 'Cancel anytime'], isPopular: false, color: '#FFA726' },
-  { id: 'sub-6', name: 'Workplace Wellness Box', description: 'Keep your team thriving with fresh microgreens delivered to the office every week', price: 699, unit: 'week', deliveryFrequency: 'Weekly', items: ['5 assorted microgreens', '2 wellness shots', 'Team recipes & tips'], benefits: ['Free delivery', 'Priority support', 'Bulk ordering', 'Cancel anytime'], isPopular: true, color: '#42A5F5' },
-];
-
-export const orders: Order[] = [
-  { id: 'ORD-2024-001', items: [{ productId: 'prod-2', productName: 'Mango Fresh', quantity: 2, price: 110, image: ph('Mango', '#FF9800') }, { productId: 'prod-6', productName: 'Carrot, Lemon & Radish Microgreens Juice', quantity: 1, price: 85, image: ph('Carrot Lemon', '#FF8F00') }], status: 'delivered', total: 340.49, subtotal: 305, deliveryFee: 35.49, deliveryAddress: { id: 'addr-1', label: 'Home', fullName: 'Riya Kapoor', phone: '+91 98765 43210', street: '42 Green Park', city: 'Mumbai', state: 'MH', zipCode: '400001', isDefault: true }, deliveryDate: '2024-12-15', deliveryTime: '08:00 - 10:00', createdAt: '2024-12-14T10:30:00Z', updatedAt: '2024-12-15T09:00:00Z' },
-  { id: 'ORD-2024-002', items: [{ productId: 'prod-3', productName: 'Choco Chill', quantity: 1, price: 115, image: ph('Choco', '#5D4037') }, { productId: 'prod-5', productName: 'Mint Melon Smoothie', quantity: 1, price: 105, image: ph('Mint Melon', '#6f8f4a') }], status: 'shipped', total: 255.49, subtotal: 220, deliveryFee: 35.49, deliveryAddress: { id: 'addr-1', label: 'Home', fullName: 'Riya Kapoor', phone: '+91 98765 43210', street: '42 Green Park', city: 'Mumbai', state: 'MH', zipCode: '400001', isDefault: true }, deliveryDate: '2024-12-20', deliveryTime: '10:00 - 12:00', createdAt: '2024-12-18T14:00:00Z', updatedAt: '2024-12-19T11:00:00Z' },
-  { id: 'ORD-2024-003', items: [{ productId: 'prod-10', productName: 'Watermelon Fresh', quantity: 2, price: 95, image: ph('Watermelon', '#E53935') }, { productId: 'prod-1', productName: 'Strawberry Banana Glow', quantity: 1, price: 99, image: ph('Strawberry Banana', '#E91E63') }], status: 'processing', total: 324.49, subtotal: 289, deliveryFee: 35.49, deliveryAddress: { id: 'addr-1', label: 'Home', fullName: 'Riya Kapoor', phone: '+91 98765 43210', street: '42 Green Park', city: 'Mumbai', state: 'MH', zipCode: '400001', isDefault: true }, deliveryDate: '2024-12-22', deliveryTime: '14:00 - 16:00', notes: 'Please ring the bell twice', createdAt: '2024-12-20T09:15:00Z', updatedAt: '2024-12-20T09:15:00Z' },
-];
-
-export const addresses: Address[] = [
-  { id: 'addr-1', label: 'Home', fullName: 'Riya Kapoor', phone: '+91 98765 43210', street: '42 Green Park', city: 'Mumbai', state: 'MH', zipCode: '400001', isDefault: true },
-  { id: 'addr-2', label: 'Work', fullName: 'Riya Kapoor', phone: '+91 87654 32109', street: 'Unit 12, Tech Park, Andheri East', city: 'Mumbai', state: 'MH', zipCode: '400069', isDefault: false },
-];
-
-export const profile: Profile = {
-  id: 'user-1', fullName: 'Riya Kapoor', email: 'riya@minigreens.com', phone: '+91 98765 43210',
-  avatar: avatarPh('R'),
-  dateOfBirth: '1995-08-22', preferences: ['Juices', 'Organic', 'Seasonal'],
-};
-
-export const faqs: FAQ[] = [
-  { id: 'faq-1', question: 'How are your juices made?', answer: 'All our products are made fresh daily using premium fruits and vegetables. Our juices are cold-pressed to preserve nutrients, and our smoothies are blended to order for maximum freshness.', category: 'Products' },
-  { id: 'faq-2', question: 'How long do the juices last?', answer: 'Our products are made fresh and delivered immediately. Smoothies are best consumed within 24 hours. Cold-pressed juices stay fresh for up to 48 hours when refrigerated properly.', category: 'Products' },
-  { id: 'faq-3', question: 'What areas do you deliver to?', answer: 'We currently deliver within Mumbai city limits and are expanding to new areas every month. Enter your pincode at checkout to check availability.', category: 'Delivery' },
-  { id: 'faq-4', question: 'Can I skip or cancel my subscription?', answer: 'Yes, you can skip any delivery or cancel your subscription anytime with no fees. Just adjust your preferences in your account settings.', category: 'Subscriptions' },
-  { id: 'faq-5', question: 'Do you add any sugar or preservatives?', answer: 'Never. Our juices are made with 100% whole fruits and vegetables — no added sugar, no preservatives, no artificial anything.', category: 'Products' },
-  { id: 'faq-6', question: 'What is your refund policy?', answer: 'If you are not satisfied with any product, contact us within 24 hours of delivery and we will make it right with a refund or replacement.', category: 'Orders' },
-  { id: 'faq-7', question: 'Do you offer catering or bulk orders?', answer: 'Yes, we partner with offices, gyms, and events. Contact us at hello@minigreens.com for bulk pricing and custom packages.', category: 'Business' },
-  { id: 'faq-8', question: 'How should I store my drinks?', answer: 'Keep them refrigerated at 2-4°C at all times. Shake well before drinking. For best taste, consume your smoothie the same day and your juice within 48 hours.', category: 'Products' },
-];
-
-export const searchSuggestions = [
-  { id: 'sg-1', text: 'Strawberry Banana Glow', type: 'product' as const },
-  { id: 'sg-2', text: 'Mango Fresh', type: 'product' as const },
-  { id: 'sg-4', text: 'Choco Chill', type: 'product' as const },
-  { id: 'sg-5', text: 'Juices', type: 'category' as const },
-  { id: 'sg-6', text: 'Watermelon Fresh', type: 'product' as const },
-  { id: 'sg-7', text: 'Microgreens', type: 'category' as const },
-  { id: 'sg-8', text: 'Broccoli', type: 'product' as const },
-  { id: 'sg-9', text: 'Beetroot', type: 'product' as const },
-  { id: 'sg-10', text: 'Wheatgrass', type: 'product' as const },
-  { id: 'sg-11', text: 'Arugula', type: 'product' as const },
-  { id: 'sg-12', text: 'Sunflower', type: 'product' as const },
-  { id: 'sg-13', text: 'Fenugreek', type: 'product' as const },
-  { id: 'sg-14', text: 'Pink Radish', type: 'product' as const },
 ];
 
 const onboardingBerryImg = require('../assets/onboarding-berry.jpg');

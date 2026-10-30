@@ -69,7 +69,7 @@ export function SearchBar({
         autoCorrect={false}
       />
       {value.length > 0 && (
-        <TouchableOpacity onPress={onClear} style={styles.clearButton}>
+        <TouchableOpacity onPress={onClear} style={styles.clearButton} hitSlop={10} accessibilityLabel="Clear search">
           <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
         </TouchableOpacity>
       )}

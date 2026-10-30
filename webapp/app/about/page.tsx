@@ -50,7 +50,7 @@ const STEPS: Step[] = [
     icon: Handshake,
     title: "Add Co-Founder",
     kicker: "Cook: until vision forms",
-    body: "Anand Lal S S partnered with Keerthi Krishnakumar Nair to found Mini Greens Company: fresh microgreens for modern life.",
+    body: "Anand Lal S S, Founder and CEO, partnered with co-founder Keerthi Krishnakumar Nair to found Mini Greens Company: fresh microgreens for modern life.",
     image: "/images/story/step-02-cofounders.webp",
     alt: "The two Mini Greens Company co-founders standing side by side in a bright room with plants, one in a white and gold saree, the other in a black Mini Greens hoodie",
     note: ["Two minds.", "One greener", "tomorrow."],

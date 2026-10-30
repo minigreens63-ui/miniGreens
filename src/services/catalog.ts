@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import type { Database } from '../types/database';
 import type { Product, Category, NutritionInfo } from '../types';
-import { getProductPlaceholder, getCategoryPlaceholder } from '../utils/placeholders';
 
 type ProductRow = Database['public']['Tables']['products']['Row'];
 type CategoryRow = Database['public']['Tables']['categories']['Row'];
@@ -60,16 +59,21 @@ const LOCAL_CATEGORY_IMAGE_BY_SLUG: Record<string, number> = {
   'tea-blends': require('../../assets/cat-tea-blends.png'),
 };
 
+// Returns null (never a fake "placeholder" image string) when there's no real
+// artwork — consumers render a PlaceholderImage (colour + initial, real native
+// View/Text) instead. A generated `data:image/svg+xml` string used to be
+// returned here, but React Native's native Image component cannot decode SVG
+// at all, so every "placeholder" silently rendered blank on iOS/Android.
 function productImage(row: Pick<ProductRow, 'slug' | 'images' | 'name'>): any {
   if (LOCAL_IMAGE_BY_SLUG[row.slug]) return LOCAL_IMAGE_BY_SLUG[row.slug];
   if (row.images && row.images.length > 0) return row.images[0];
-  return getProductPlaceholder(row.name);
+  return null;
 }
 
 function categoryImage(row: Pick<CategoryRow, 'slug' | 'image' | 'name'>): any {
   if (LOCAL_CATEGORY_IMAGE_BY_SLUG[row.slug]) return LOCAL_CATEGORY_IMAGE_BY_SLUG[row.slug];
   if (row.image) return row.image;
-  return getCategoryPlaceholder(row.name);
+  return null;
 }
 
 const DEFAULT_NUTRITION: NutritionInfo = {

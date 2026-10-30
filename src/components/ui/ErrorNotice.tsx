@@ -34,7 +34,7 @@ export function ErrorNotice({ message, title = 'Something went wrong', onDismiss
         </Typography>
       </View>
       {onDismiss && (
-        <Pressable onPress={onDismiss} hitSlop={10} style={styles.close}>
+        <Pressable onPress={onDismiss} hitSlop={10} style={styles.close} accessibilityLabel="Dismiss">
           <Ionicons name="close" size={16} color={colors.textTertiary} />
         </Pressable>
       )}

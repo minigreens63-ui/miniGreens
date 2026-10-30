@@ -148,14 +148,14 @@ export default function WomenWhoGrowPage() {
             Our women entrepreneurship program
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-(--color-forest)/70">
-            Sumam is how we help create new women entrepreneurs, from growing at home to selling with us. Start with
-            a partner application and our team will get in touch.
+            Sumam is how we help create new women entrepreneurs, from growing at home to selling with us. Reach out
+            and our team will get in touch.
           </p>
           <Link
-            href="/partner/apply"
+            href="/contact"
             className="mt-8 inline-flex items-center rounded-full bg-(--color-forest) px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
           >
-            Apply to become a partner
+            Get in touch
           </Link>
         </section>
 

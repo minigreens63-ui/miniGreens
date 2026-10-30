@@ -45,6 +45,7 @@ export interface Database {
           whatsapp_number: string | null;
           whatsapp_verified_at: string | null;
           whatsapp_opt_in: boolean;
+          is_super_admin: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -61,6 +62,7 @@ export interface Database {
           whatsapp_number?: string | null;
           whatsapp_verified_at?: string | null;
           whatsapp_opt_in?: boolean;
+          is_super_admin?: boolean;
         };
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
         Relationships: [];
@@ -280,10 +282,17 @@ export interface Database {
           discount_amount: number;
           expected_availability_date: string | null;
           oversold: boolean;
+          is_gift: boolean;
+          gift_occasion: string | null;
+          gift_recipient_name: string | null;
+          gift_recipient_phone: string | null;
+          gift_recipient_address: string | null;
+          gift_sender_name: string | null;
+          gift_sender_phone: string | null;
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['orders']['Row'], 'id' | 'created_at' | 'updated_at' | 'razorpay_order_id' | 'razorpay_payment_id' | 'razorpay_signature' | 'payment_status' | 'discount_code' | 'discount_amount' | 'expected_availability_date' | 'oversold'> & {
+        Insert: Omit<Database['public']['Tables']['orders']['Row'], 'id' | 'created_at' | 'updated_at' | 'razorpay_order_id' | 'razorpay_payment_id' | 'razorpay_signature' | 'payment_status' | 'discount_code' | 'discount_amount' | 'expected_availability_date' | 'oversold' | 'is_gift' | 'gift_occasion' | 'gift_recipient_name' | 'gift_recipient_phone' | 'gift_recipient_address' | 'gift_sender_name' | 'gift_sender_phone'> & {
           id?: string;
           oversold?: boolean;
           razorpay_order_id?: string | null;
@@ -293,6 +302,13 @@ export interface Database {
           discount_code?: string | null;
           discount_amount?: number;
           expected_availability_date?: string | null;
+          is_gift?: boolean;
+          gift_occasion?: string | null;
+          gift_recipient_name?: string | null;
+          gift_recipient_phone?: string | null;
+          gift_recipient_address?: string | null;
+          gift_sender_name?: string | null;
+          gift_sender_phone?: string | null;
         };
         Update: Partial<Database['public']['Tables']['orders']['Insert']>;
         Relationships: [

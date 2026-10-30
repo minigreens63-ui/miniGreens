@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 const FARM_ADDRESS = "123 Green Farm Road, Wayanad, Kerala 673121";
 
 const DETAILS = [
-  { icon: Phone, label: "Call us", value: "+91 98765 43210", href: "tel:+919876543210" },
+  { icon: Phone, label: "Call us", value: "+91 99803 44273", href: "tel:+919980344273" },
   {
     icon: EnvelopeSimple,
     label: "Email",
@@ -64,7 +64,7 @@ export default function ContactPage() {
                 <ArrowRight size={15} weight="bold" />
               </a>
               <a
-                href="tel:+919876543210"
+                href="tel:+919980344273"
                 className="inline-flex items-center gap-2.5 rounded-full border border-(--color-forest)/30 bg-white/60 px-6 py-3 text-sm font-semibold text-(--color-forest) transition-colors hover:border-(--color-forest)"
               >
                 <Phone size={16} />
@@ -77,7 +77,7 @@ export default function ContactPage() {
             <div className="relative aspect-[16/11] overflow-hidden rounded-3xl shadow-[0_8px_32px_rgba(31,58,36,0.12)]">
               <Image
                 src="/images/journal/grow-room.webp"
-                alt="Shelves of microgreen trays in the Mini Greens growing room"
+                alt="Shelves of microgreen tea blends in the Mini Greens growing room"
                 fill
                 priority
                 sizes="(min-width: 1024px) 50vw, 100vw"

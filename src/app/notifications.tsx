@@ -114,6 +114,7 @@ export default function NotificationsScreen() {
             router.back();
           }}
           style={styles.headerButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>

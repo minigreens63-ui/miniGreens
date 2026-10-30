@@ -71,7 +71,7 @@ export function Footer() {
           <h4 className="font-medium text-(--color-sage)">Contact Us</h4>
           <ul className="mt-4 space-y-3 text-sm text-(--color-muted)">
             <li className="flex items-center gap-2">
-              <Phone size={16} className="text-(--color-sage)" /> +91 98765 43210
+              <Phone size={16} className="text-(--color-sage)" /> +91 99803 44273
             </li>
             <li className="flex items-center gap-2">
               <EnvelopeSimple size={16} className="text-(--color-sage)" /> theminigreenscompany@gmail.com

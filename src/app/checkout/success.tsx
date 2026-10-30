@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Modal } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +30,7 @@ export default function CheckoutSuccessScreen() {
   const insets = useSafeAreaInsets();
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [showGiftModal, setShowGiftModal] = useState(false);
 
   const iconScale = useSharedValue(0);
   const pulseScale = useSharedValue(0.8);
@@ -52,6 +53,7 @@ export default function CheckoutSuccessScreen() {
           setLoadFailed(true);
         } else {
           setOrder(data);
+          if (data.is_gift) setShowGiftModal(true);
         }
       });
     // Never leave the user on an endless spinner if the order row is slow / blocked (RLS, bad id).
@@ -194,6 +196,29 @@ export default function CheckoutSuccessScreen() {
           />
         </Animated.View>
       </View>
+
+      <Modal visible={showGiftModal} transparent animationType="fade" onRequestClose={() => setShowGiftModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIconBg}>
+              <Ionicons name="gift" size={30} color={colors.primary} />
+            </View>
+            <Typography variant="h4" color={colors.text} align="center" style={{ marginTop: spacing.md }}>
+              Gift order placed!
+            </Typography>
+            <Typography variant="body" color={colors.textSecondary} align="center" style={{ marginTop: spacing.sm }}>
+              The MiniGreens team will contact you shortly regarding payment and delivery for this gift.
+            </Typography>
+            <Button
+              title="Got it"
+              variant="primary"
+              fullWidth
+              style={{ marginTop: spacing.lg }}
+              onPress={() => setShowGiftModal(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -209,4 +234,27 @@ const styles = StyleSheet.create({
   confirmCard: { marginBottom: spacing['2xl'] },
   confirmRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: spacing.sm },
   confirmRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.borderLight },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    alignItems: 'center',
+    ...shadows.xl,
+  },
+  modalIconBg: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.successLight,
+  },
 });

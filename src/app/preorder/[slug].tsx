@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -7,7 +8,6 @@ import { colors, spacing, borderRadius } from '../../theme';
 import { Typography } from '../../components/ui/Typography';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { TextField } from '../../components/ui/TextField';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PressableScale } from '../../components/ui/PressableScale';
@@ -18,7 +18,8 @@ import { ErrorNotice } from '../../components/ui/ErrorNotice';
 import { useProduct } from '../../services/catalog';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
-import { resolveImageSource, getProductPlaceholder } from '../../utils/placeholders';
+import { resolveImageSource } from '../../utils/placeholders';
+import { PlaceholderImage } from '../../components/ui/PlaceholderImage';
 import type { Database } from '../../types/database';
 
 type Address = Database['public']['Tables']['addresses']['Row'];
@@ -34,7 +35,6 @@ export default function PreorderScreen() {
   const [quantity, setQuantity] = useState(initialQty);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
-  const [notes, setNotes] = useState('');
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -121,7 +121,7 @@ export default function PreorderScreen() {
         delivery_address_id: selectedAddressId,
         delivery_date: null,
         delivery_time: null,
-        notes: notes || null,
+        notes: null,
         order_type: 'preorder',
         business_name: null,
         contact_person: null,
@@ -189,10 +189,14 @@ export default function PreorderScreen() {
       {/* Product + quantity */}
       <Card variant="outlined" padding="lg" style={styles.productCard}>
         <View style={styles.productRow}>
-          <Image
-            source={resolveImageSource(product.images[0] ?? getProductPlaceholder(product.name))}
-            style={styles.productImage}
-          />
+          {product.images[0] ? (
+            <Image
+              source={resolveImageSource(product.images[0])}
+              style={styles.productImage}
+            />
+          ) : (
+            <PlaceholderImage label={product.name} style={styles.productImage} />
+          )}
           <View style={styles.productInfo}>
             <Typography variant="body" weight="semibold">{product.name}</Typography>
             <Typography variant="bodySmall" color={colors.textSecondary} style={{ marginTop: 2 }}>
@@ -226,30 +230,11 @@ export default function PreorderScreen() {
         </View>
       </Card>
 
-      {/* No-charge notice */}
-      <View style={styles.infoBanner}>
-        <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-        <Typography variant="caption" color={colors.textSecondary} style={styles.infoBannerText}>
-          You won&apos;t be charged now. We&apos;ll notify you when this item is back in stock and confirm delivery then.
-        </Typography>
-      </View>
-
       {/* Address */}
       <Typography variant="bodySmall" weight="semibold" color={colors.text} style={styles.sectionLabel}>
         Delivery Address
       </Typography>
       <AddressPicker addresses={addresses} selectedId={selectedAddressId} onSelect={setSelectedAddressId} />
-
-      <View style={styles.notes}>
-        <TextField
-          label="Notes (optional)"
-          placeholder="Anything we should know..."
-          value={notes}
-          onChangeText={setNotes}
-          leftIcon="chatbubble-outline"
-          multiline
-        />
-      </View>
     </Screen>
   );
 }
@@ -286,16 +271,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   qtyValue: { marginHorizontal: spacing.lg, minWidth: 20, textAlign: 'center' },
-  infoBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    backgroundColor: colors.accentSurface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  infoBannerText: { flex: 1, lineHeight: 17 },
   sectionLabel: { marginBottom: spacing.md },
-  notes: { marginTop: spacing.lg },
 });

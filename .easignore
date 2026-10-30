@@ -28,6 +28,7 @@ yarn-error.*
 
 # --- not needed for the mobile APK build ---
 admin/
+webapp/
 website/
 supabase/
 BUILD_PLAN.md
@@ -35,3 +36,4 @@ BUILD_PLAN.md
 .git/
 **/.next/
 **/*.png.orig
+/design-source

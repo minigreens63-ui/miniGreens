@@ -1,14 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  useWindowDimensions,
-  FlatList,
-  Image,
-  Pressable,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from 'react-native';
+import { View, StyleSheet, useWindowDimensions, FlatList, Pressable, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -180,7 +172,7 @@ export default function OnboardingScreen() {
                 },
               ]}
             >
-              <Image source={item.image} style={styles.heroImage} resizeMode="cover" />
+              <Image source={item.image} style={styles.heroImage} contentFit="cover" />
               {/* Blend the photo's straight edges into the dark-green canvas */}
               <LinearGradient
                 colors={[SLIDE_BG, 'rgba(10,36,22,0.05)', 'transparent']}

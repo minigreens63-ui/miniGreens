@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "@phosphor-icons/react";
 import type { Database, KycDocument, KycStatus } from "@mobile/database";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -9,6 +10,8 @@ import {
   rejectPartner,
   updatePartnerFee,
   updateKycStatus,
+  createPartner,
+  searchProfilesForPartner,
 } from "@/app/dashboard/(protected)/partners/actions";
 
 type Partner = Database["public"]["Tables"]["partners"]["Row"];
@@ -45,10 +48,204 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "rejected", label: "Rejected" },
 ];
 
+type ProfileMatch = { id: string; full_name: string; email: string | null; phone: string | null };
+
+const BUSINESS_TYPE_OPTIONS: Partner["business_type"][] = [
+  "individual",
+  "women",
+  "cafe",
+  "restaurant",
+  "shop",
+  "fitness_wellness",
+  "community",
+];
+
+function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ProfileMatch[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [profile, setProfile] = useState<ProfileMatch | null>(null);
+  const [businessType, setBusinessType] = useState<Partner["business_type"]>("individual");
+  const [businessName, setBusinessName] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  async function handleSearch(value: string) {
+    setQuery(value);
+    setProfile(null);
+    if (value.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    setSearching(true);
+    const matches = await searchProfilesForPartner(value);
+    setSearching(false);
+    setResults(matches);
+  }
+
+  function pickProfile(p: ProfileMatch) {
+    setProfile(p);
+    setResults([]);
+    setQuery(p.full_name);
+    if (!contactPerson) setContactPerson(p.full_name);
+    if (!phone && p.phone) setPhone(p.phone);
+  }
+
+  function handleSubmit() {
+    if (!profile || !businessName.trim() || !contactPerson.trim() || !phone.trim()) {
+      setError("Pick an account and fill business name, contact person and phone.");
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const { error: createError } = await createPartner({
+        profileId: profile.id,
+        businessType,
+        businessName: businessName.trim(),
+        contactPerson: contactPerson.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+      });
+      if (createError) {
+        setError(createError);
+        return;
+      }
+      onCreated();
+    });
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className="fixed left-1/2 top-1/2 z-50 w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-[#0A2416]">Add Partner</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              MGC account (search by name, email or phone)
+            </label>
+            <input
+              value={query}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search existing accounts..."
+              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+            {searching && <p className="mt-1 text-xs text-slate-400">Searching...</p>}
+            {results.length > 0 && (
+              <ul className="mt-2 max-h-40 overflow-y-auto rounded-xl border border-slate-100 divide-y divide-slate-50">
+                {results.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => pickProfile(p)}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50/50"
+                    >
+                      <span className="font-medium text-slate-800">{p.full_name}</span>{" "}
+                      <span className="text-slate-400 text-xs">{p.email ?? p.phone ?? ""}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {profile && (
+              <p className="mt-2 text-xs text-emerald-700">
+                Selected: {profile.full_name} ({profile.email ?? profile.phone})
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              Business type
+            </label>
+            <select
+              value={businessType}
+              onChange={(e) => setBusinessType(e.target.value as Partner["business_type"])}
+              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            >
+              {BUSINESS_TYPE_OPTIONS.map((t) => (
+                <option key={t} value={t}>
+                  {BUSINESS_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              Business / grower name
+            </label>
+            <input
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                Contact person
+              </label>
+              <input
+                value={contactPerson}
+                onChange={(e) => setContactPerson(e.target.value)}
+                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                Phone
+              </label>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              Address (optional)
+            </label>
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </div>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <button
+            disabled={isPending}
+            onClick={handleSubmit}
+            className="w-full py-2.5 text-sm font-semibold rounded-xl bg-[#0A2416] text-white transition-all active:scale-[0.97] disabled:opacity-50"
+          >
+            {isPending ? "Adding..." : "Add Partner"}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function PartnersClient({ partners }: { partners: Partner[] }) {
+  const router = useRouter();
   const [tab, setTab] = useState<TabKey>("all");
   const [selected, setSelected] = useState<Partner | null>(null);
   const [feeInput, setFeeInput] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const filtered = useMemo(
@@ -106,8 +303,9 @@ export default function PartnersClient({ partners }: { partners: Partner[] }) {
 
   return (
     <>
-      {/* Tabs */}
-      <div className="flex gap-0 border-b border-slate-200 overflow-x-auto animate-fade-up" style={{ "--i": 1 } as React.CSSProperties}>
+      {/* Tabs + Add Partner */}
+      <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-6 pt-4">
+        <div className="flex gap-0 overflow-x-auto animate-fade-up" style={{ "--i": 1 } as React.CSSProperties}>
         {TABS.map(({ key, label }) => (
           <button
             key={key}
@@ -125,7 +323,24 @@ export default function PartnersClient({ partners }: { partners: Partner[] }) {
             </span>
           </button>
         ))}
+        </div>
+        <button
+          onClick={() => setAddOpen(true)}
+          className="shrink-0 rounded-xl bg-[#0A2416] px-4 py-2 text-sm font-semibold text-white transition-all active:scale-[0.97]"
+        >
+          + Add Partner
+        </button>
       </div>
+
+      {addOpen && (
+        <AddPartnerModal
+          onClose={() => setAddOpen(false)}
+          onCreated={() => {
+            setAddOpen(false);
+            router.refresh();
+          }}
+        />
+      )}
 
       {/* Table */}
       <div className="overflow-x-auto animate-fade-up" style={{ "--i": 2 } as React.CSSProperties}>

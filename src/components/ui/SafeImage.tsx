@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet, ImageStyle, ViewStyle } from 'react-native';
-import { colors, borderRadius } from '../../theme';
-import { getPlaceholder } from '../../utils/placeholders';
+import { View, StyleSheet, ImageStyle, ViewStyle } from 'react-native';
+import { Image } from 'expo-image';
+import { colors } from '../../theme';
+import { PlaceholderImage } from './PlaceholderImage';
 
 interface SafeImageProps {
   uri?: string;
@@ -21,24 +22,21 @@ export function SafeImage({
   size = 'cover',
 }: SafeImageProps) {
   const [failed, setFailed] = useState(false);
-  const fallbackSrc = placeholder
-    ? getPlaceholder(placeholder)
-    : getPlaceholder('MiniGreens', fallbackColor || colors.primary);
-
-  const displayUri = (!uri || failed) ? fallbackSrc : uri;
-
-  const resolvedStyle: ImageStyle = {
-    ...(style as object),
-    resizeMode: size,
-  } as ImageStyle;
+  const showPlaceholder = !uri || failed;
 
   return (
-    <View style={[styles.container, containerStyle, (!uri || failed) && { backgroundColor: 'transparent' }]}>
-      <Image
-        source={{ uri: displayUri }}
-        style={[style, { width: style?.width as number || '100%', height: style?.height as number || '100%' }]}
-        onError={() => setFailed(true)}
-      />
+    <View style={[styles.container, containerStyle, showPlaceholder && { backgroundColor: 'transparent' }]}>
+      {showPlaceholder ? (
+        <PlaceholderImage label={placeholder || 'MiniGreens'} color={fallbackColor || colors.primary} />
+      ) : (
+        <Image
+          source={{ uri }}
+          style={[style, { width: style?.width as number || '100%', height: style?.height as number || '100%' }]}
+          contentFit={size === 'stretch' ? 'fill' : size}
+          cachePolicy="memory-disk"
+          onError={() => setFailed(true)}
+        />
+      )}
     </View>
   );
 }

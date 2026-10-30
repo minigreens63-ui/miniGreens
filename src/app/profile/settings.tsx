@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -113,10 +113,12 @@ function SettingRow({
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
+  const isInteractive = item.type === 'toggle' || !!item.route;
+
   const handlePress = () => {
-    if (item.type === 'nav') {
+    if (item.type === 'nav' && item.route) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      if (item.route) router.push(item.route as any);
+      router.push(item.route as any);
     }
   };
 
@@ -127,9 +129,10 @@ function SettingRow({
     >
       <Pressable
         style={[styles.row, !isLast && styles.rowBorder]}
-        onPressIn={() => { scale.value = withSpring(0.98, { damping: 31, stiffness: 220, mass: 1 }); }}
+        onPressIn={() => { if (isInteractive) scale.value = withSpring(0.98, { damping: 31, stiffness: 220, mass: 1 }); }}
         onPressOut={() => { scale.value = withSpring(1, { damping: 31, stiffness: 220, mass: 1 }); }}
         onPress={handlePress}
+        disabled={!isInteractive}
       >
         <View style={styles.rowIcon}>
           <Ionicons name={item.icon} size={18} color={colors.primary} />
@@ -152,7 +155,7 @@ function SettingRow({
                 {item.value}
               </Typography>
             )}
-            <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+            {item.route && <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />}
           </View>
         )}
       </Pressable>
@@ -163,6 +166,7 @@ function SettingRow({
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const profile = useAuthStore((s) => s.profile);
+  const deleteAccount = useAuthStore((s) => s.deleteAccount);
   const [toggles, setToggles] = useState<Record<string, boolean>>({
     push: true,
     email: false,
@@ -171,6 +175,32 @@ export default function SettingsScreen() {
     analytics: true,
   });
   const [defaultAddressLabel, setDefaultAddressLabel] = useState('Not set');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccount = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      'Delete your account?',
+      "This removes your personal info (name, email, phone, date of birth, addresses) and cancels any active subscription. Your past orders stay in our records for billing and tax purposes, but will no longer be linked to you by name. This can't be undone.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete My Account',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            const { error } = await deleteAccount();
+            setIsDeleting(false);
+            if (error) {
+              Alert.alert("Couldn't delete account", error);
+              return;
+            }
+            router.replace('/auth/login');
+          },
+        },
+      ],
+    );
+  };
 
   useEffect(() => {
     if (!profile) return;
@@ -196,6 +226,7 @@ export default function SettingsScreen() {
             router.back();
           }}
           style={styles.headerButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -237,6 +268,36 @@ export default function SettingsScreen() {
 
         <Animated.View
           entering={FadeInUp.delay(rowDelay + 60).springify().damping(31).mass(1).stiffness(100)}
+          style={styles.section}
+        >
+          <Typography
+            variant="caption"
+            weight="semibold"
+            color={colors.textTertiary}
+            uppercase
+            style={styles.sectionTitle}
+          >
+            Account
+          </Typography>
+          <Pressable
+            style={[styles.sectionCard, styles.dangerRow]}
+            onPress={handleDeleteAccount}
+            disabled={isDeleting}
+            accessibilityLabel="Delete account"
+          >
+            <View style={[styles.rowIcon, styles.dangerIcon]}>
+              <Ionicons name="trash-outline" size={18} color={colors.error} />
+            </View>
+            <View style={styles.rowContent}>
+              <Typography variant="body" color={colors.error}>
+                {isDeleting ? 'Deleting account…' : 'Delete Account'}
+              </Typography>
+            </View>
+          </Pressable>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInUp.delay(rowDelay + 120).springify().damping(31).mass(1).stiffness(100)}
           style={styles.versionRow}
         >
           <Typography variant="caption" color={colors.textTertiary} style={{ textAlign: 'center' }}>
@@ -307,6 +368,15 @@ const styles = StyleSheet.create({
   },
   rowContent: {
     flex: 1,
+  },
+  dangerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+  },
+  dangerIcon: {
+    backgroundColor: colors.errorLight,
   },
   navRight: {
     flexDirection: 'row',

@@ -76,7 +76,7 @@ export async function SignatureProduct() {
             Broccoli and arugula microgreens with refreshing mint and coriander. Fresh, with a
             gentle spicy kick, for a daily wellness ritual that actually tastes good.
           </p>
-          <p className="mt-2 text-xs font-medium text-(--color-forest)/60">15 sachets · Naturally caffeine-free</p>
+          <p className="mt-2 text-xs font-medium text-(--color-forest)/60">10 sachets · Naturally caffeine-free</p>
           {price != null && (
             <p className="font-display mt-5 text-2xl font-semibold text-(--color-forest)">₹{price}</p>
           )}

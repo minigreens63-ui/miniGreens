@@ -4,7 +4,7 @@ import { PageShell } from "@/components/PageShell";
 export const metadata: Metadata = {
   title: "Terms & Conditions | Mini Greens Company",
   description:
-    "The terms and conditions for ordering fresh microgreens, juices and tea blends from Mini Greens Company.",
+    "The terms and conditions for ordering fresh tea blends from Mini Greens Company.",
   alternates: { canonical: "/terms" },
 };
 

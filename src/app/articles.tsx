@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -32,7 +33,7 @@ export default function ArticlesScreen() {
             accessibilityLabel={article.title}
           >
             <View style={styles.card}>
-              <Image source={resolveImageSource(article.image)} style={styles.image} resizeMode="cover" />
+              <Image source={resolveImageSource(article.image)} style={styles.image} contentFit="cover" />
               <View style={styles.cardBody}>
                 <View style={styles.pill}>
                   <Typography variant="caption" color={colors.primaryDark} weight="bold" style={styles.pillText}>

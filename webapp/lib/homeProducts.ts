@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { resolveProductImage } from "@/lib/productImages";
+import { VISIBLE_CATEGORY_SLUGS } from "@/lib/categories";
 
 export type HomeProduct = {
   slug: string;
@@ -40,8 +41,9 @@ export const getHomeCatalog = cache(async (): Promise<{
       .order("rating", { ascending: false, nullsFirst: false }),
   ]);
 
-  const catById = new Map((categories ?? []).map((c) => [c.id, c]));
-  const visible = (products ?? []).filter((p) => !p.category_id || catById.has(p.category_id));
+  const visibleCategories = (categories ?? []).filter((c) => VISIBLE_CATEGORY_SLUGS.includes(c.slug));
+  const catById = new Map(visibleCategories.map((c) => [c.id, c]));
+  const visible = (products ?? []).filter((p) => p.category_id && catById.has(p.category_id));
   const mapped = visible.map((p) => ({
     slug: p.slug,
     name: p.name,
@@ -54,7 +56,7 @@ export const getHomeCatalog = cache(async (): Promise<{
     category: catById.get(p.category_id ?? "")?.slug ?? null,
     categoryName: catById.get(p.category_id ?? "")?.name ?? null,
   }));
-  return { categories: categories ?? [], products: mapped };
+  return { categories: visibleCategories, products: mapped };
 });
 
 export async function getHomeProducts(): Promise<HomeProduct[]> {

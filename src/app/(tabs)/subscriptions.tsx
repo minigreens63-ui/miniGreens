@@ -6,7 +6,7 @@ import Animated, {
   FadeInUp,
   ZoomIn,
 } from 'react-native-reanimated';
-import { colors, spacing, borderRadius } from '../../theme';
+import { colors, spacing, borderRadius, shadows } from '../../theme';
 import { Typography } from '../../components/ui/Typography';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -21,20 +21,46 @@ import type { Database } from '../../types/database';
 type SubscriptionPlanRow = Database['public']['Tables']['subscription_plans']['Row'];
 type SubscriptionRow = Database['public']['Tables']['subscriptions']['Row'];
 
+// Plan "includes" line icon — a quiet visual cue per item type, picked by keyword.
+function includeIcon(item: string): keyof typeof Ionicons.glyphMap {
+  const s = item.toLowerCase();
+  if (s.includes('juice')) return 'nutrition-outline';
+  if (s.includes('salad')) return 'restaurant-outline';
+  if (s.includes('tea')) return 'cafe-outline';
+  if (s.includes('delivery')) return 'bicycle-outline';
+  if (s.includes('microgreen') || s.includes('green')) return 'leaf';
+  return 'leaf';
+}
+
+function PlanFlourish() {
+  return (
+    <View pointerEvents="none" style={styles.headerFlourish}>
+      <Ionicons name="leaf" size={70} color={colors.green[200]} style={styles.flourishLeafBack} />
+      <Ionicons name="leaf" size={48} color={colors.primaryLight} style={styles.flourishLeafFront} />
+    </View>
+  );
+}
+
 export default function SubscriptionsScreen() {
   const session = useAuthStore((s) => s.session);
 
   const [plans, setPlans] = useState<SubscriptionPlanRow[]>([]);
   const [activeSubscription, setActiveSubscription] = useState<SubscriptionRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [subscribingId, setSubscribingId] = useState<string | null>(null);
   const [subscribeError, setSubscribeError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
-    const { data: planData } = await supabase
+    setLoadError(false);
+    const { data: planData, error: planError } = await supabase
       .from('subscription_plans')
       .select('*')
       .order('price', { ascending: true });
+    if (planError) {
+      setLoadError(true);
+      setLoading(false);
+      return;
+    }
     setPlans(planData ?? []);
 
     if (session) {
@@ -85,8 +111,23 @@ export default function SubscriptionsScreen() {
   }
 
   return (
-    <Screen title="Subscriptions" subtitle="Fresh on a schedule. Skip or cancel anytime." largeTitle showBack={false} hasTabBar>
+    <Screen showBack={false} hasTabBar>
+      <View style={styles.header}>
+        <PlanFlourish />
+        <Typography variant="label" color={colors.accentSoft}>Plans</Typography>
+        <Typography variant="h2" color={colors.text}>Subscriptions</Typography>
+        <Typography variant="body" color={colors.textSecondary} style={styles.headerSubtitle}>
+          Fresh on a schedule. Skip or cancel anytime.
+        </Typography>
+      </View>
+
       <ErrorNotice message={subscribeError} onDismiss={() => setSubscribeError(null)} />
+      {loadError && (
+        <ErrorNotice
+          message="Couldn't load subscription plans. Check your connection and try again."
+          onDismiss={() => setLoadError(false)}
+        />
+      )}
 
       {activeSubscription && (
         <Animated.View entering={FadeInUp.delay(80).springify().damping(31).mass(1).stiffness(100)}>
@@ -110,81 +151,105 @@ export default function SubscriptionsScreen() {
       )}
 
         {/* Plans */}
-        {plans.map((plan, i) => (
-          <Animated.View
-            key={plan.id}
-            entering={FadeInUp.delay(180 + i * 100).springify().damping(31).mass(1).stiffness(100)}
-          >
-            <Card
-              style={[styles.planCard, plan.is_popular && styles.popularCard].filter(Boolean) as any}
-              padding="xl"
-              pressable
+        {plans.map((plan, i) => {
+          const isCurrentPlan = !!activeSubscription && activeSubscription.plan_id === plan.id;
+          return (
+            <Animated.View
+              key={plan.id}
+              entering={FadeInUp.delay(180 + i * 100).springify().damping(31).mass(1).stiffness(100)}
             >
-              {plan.is_popular && (
-                <Animated.View
-                  entering={ZoomIn.delay(280 + i * 100).springify().damping(19).mass(1).stiffness(100)}
-                  style={styles.popularBadge}
-                >
-                  <Typography variant="caption" color={colors.textInverse} weight="bold">
-                    MOST POPULAR
-                  </Typography>
-                </Animated.View>
-              )}
-              <View style={[styles.planHeader, plan.is_popular && styles.planHeaderPopular]}>
-                <View style={styles.planHeaderInfo}>
-                  <Typography variant="h4" color={colors.text}>
-                    {plan.name}
-                  </Typography>
-                  <Typography variant="bodySmall" color={colors.textSecondary}>
-                    {plan.description}
-                  </Typography>
+              <Card
+                style={[styles.planCard, plan.is_popular && styles.popularCard].filter(Boolean) as any}
+                padding="xl"
+                pressable
+              >
+                <View pointerEvents="none" style={styles.planFlourish}>
+                  <Ionicons name="leaf" size={64} color={colors.green[100]} style={styles.planFlourishLeaf} />
                 </View>
-                <View style={styles.planPrice}>
-                  <Typography variant="h3" color={colors.accent} weight="bold">
-                    ₹{plan.price}
+
+                {plan.is_popular && (
+                  <Animated.View
+                    entering={ZoomIn.delay(280 + i * 100).springify().damping(19).mass(1).stiffness(100)}
+                    style={styles.popularBadge}
+                  >
+                    <Typography variant="caption" color={colors.textInverse} weight="bold">
+                      MOST POPULAR
+                    </Typography>
+                  </Animated.View>
+                )}
+
+                {isCurrentPlan && (
+                  <Typography variant="label" color={colors.accentSoft} style={styles.yourPlanBadge}>
+                    Your Plan
                   </Typography>
-                  <Typography variant="caption" color={colors.textSecondary}>
-                    /{plan.unit}
-                  </Typography>
+                )}
+
+                <View style={[styles.planHeader, (plan.is_popular || isCurrentPlan) && styles.planHeaderPopular]}>
+                  <View style={styles.planHeaderInfo}>
+                    <Typography variant="h3" color={colors.text}>
+                      {plan.name}
+                    </Typography>
+                    <Typography variant="bodySmall" color={colors.textSecondary} style={styles.planDescription}>
+                      {plan.description}
+                    </Typography>
+                  </View>
+                  <View style={styles.planPrice}>
+                    <Typography variant="h3" color={colors.accent} weight="bold">
+                      ₹{plan.price}
+                    </Typography>
+                    <Typography variant="caption" color={colors.textSecondary}>
+                      /{plan.unit}
+                    </Typography>
+                  </View>
                 </View>
-              </View>
 
-              <View style={styles.planDivider} />
-
-              <Typography variant="bodySmall" weight="semibold" color={colors.text} style={styles.includesLabel}>
-                Includes:
-              </Typography>
-              {plan.items.map((item, index) => (
-                <View key={index} style={styles.planItem}>
-                  <Ionicons name="leaf" size={14} color={colors.primary} />
-                  <Typography variant="bodySmall" color={colors.textSecondary} style={styles.planItemText}>
-                    {item}
-                  </Typography>
-                </View>
-              ))}
-
-              <View style={styles.planBenefits}>
-                {plan.benefits.map((benefit, index) => (
-                  <View key={index} style={styles.benefit}>
-                    <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                    <Typography variant="bodySmall" color={colors.textSecondary} style={styles.benefitText}>
-                      {benefit}
+                <Typography variant="label" color={colors.textTertiary} style={styles.includesLabel}>
+                  Includes
+                </Typography>
+                {plan.items.map((item, index) => (
+                  <View key={index} style={styles.planItem}>
+                    <View style={styles.planItemIconBg}>
+                      <Ionicons name={includeIcon(item)} size={14} color={colors.primary} />
+                    </View>
+                    <Typography variant="bodySmall" color={colors.textSecondary} style={styles.planItemText}>
+                      {item}
                     </Typography>
                   </View>
                 ))}
-              </View>
 
-              <Button
-                title={activeSubscription ? 'Manage Subscription' : 'Get Started'}
-                variant={plan.is_popular ? 'primary' : 'outline'}
-                fullWidth
-                loading={subscribingId === plan.id}
-                onPress={() => handleSubscribe(plan)}
-                style={styles.planButton}
-              />
-            </Card>
-          </Animated.View>
-        ))}
+                <View style={styles.planDivider} />
+
+                <View style={styles.planBenefits}>
+                  {plan.benefits.map((benefit, index) => (
+                    <View key={index} style={styles.benefit}>
+                      <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                      <Typography variant="bodySmall" color={colors.textSecondary} style={styles.benefitText}>
+                        {benefit}
+                      </Typography>
+                    </View>
+                  ))}
+                </View>
+
+                <PressableScale
+                  style={styles.manageButton}
+                  onPress={() => handleSubscribe(plan)}
+                  haptic={false}
+                  accessibilityLabel={activeSubscription ? 'Manage subscription' : `Get started with ${plan.name}`}
+                >
+                  <Ionicons
+                    name={activeSubscription ? 'settings-outline' : 'arrow-forward-circle-outline'}
+                    size={18}
+                    color={colors.onAccent}
+                  />
+                  <Typography variant="body" weight="semibold" color={colors.onAccent} style={styles.manageButtonLabel}>
+                    {activeSubscription ? 'Manage Subscription' : 'Get Started'}
+                  </Typography>
+                  <Ionicons name="chevron-forward" size={18} color={colors.onAccent} />
+                </PressableScale>
+              </Card>
+            </Animated.View>
+          );
+        })}
 
         {/* Build your own */}
         <Animated.View
@@ -236,6 +301,36 @@ export default function SubscriptionsScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    position: 'relative',
+    overflow: 'hidden',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+  },
+  headerFlourish: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    width: 100,
+    height: 100,
+  },
+  flourishLeafBack: {
+    position: 'absolute',
+    top: 2,
+    right: 0,
+    opacity: 0.5,
+    transform: [{ rotate: '18deg' }],
+  },
+  flourishLeafFront: {
+    position: 'absolute',
+    top: 34,
+    right: 32,
+    opacity: 0.55,
+    transform: [{ rotate: '-12deg' }],
+  },
+  headerSubtitle: {
+    marginTop: 4,
+  },
   activeBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -256,6 +351,7 @@ const styles = StyleSheet.create({
   planCard: {
     marginBottom: spacing.lg,
     position: 'relative',
+    overflow: 'hidden',
   },
   popularCard: {
     borderWidth: 2,
@@ -270,6 +366,18 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
   },
+  planFlourish: {
+    position: 'absolute',
+    top: -16,
+    right: -16,
+  },
+  planFlourishLeaf: {
+    opacity: 0.35,
+    transform: [{ rotate: '22deg' }],
+  },
+  yourPlanBadge: {
+    marginBottom: spacing.xs,
+  },
   planHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -282,6 +390,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: spacing.md,
   },
+  planDescription: {
+    marginTop: 2,
+  },
   planPrice: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -293,6 +404,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.lg,
   },
   includesLabel: {
+    marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
   planItem: {
@@ -300,11 +412,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
+  planItemIconBg: {
+    width: 26,
+    height: 26,
+    borderRadius: borderRadius.pill,
+    backgroundColor: colors.accentSurface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   planItemText: {
     marginLeft: spacing.sm,
   },
   planBenefits: {
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
   },
   benefit: {
     flexDirection: 'row',
@@ -314,8 +434,18 @@ const styles = StyleSheet.create({
   benefitText: {
     marginLeft: spacing.sm,
   },
-  planButton: {
+  manageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: spacing.xl,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.pill,
+    backgroundColor: colors.primary,
+    ...shadows.sm,
+  },
+  manageButtonLabel: {
+    marginHorizontal: spacing.sm,
   },
   buildOwnCard: {
     marginTop: spacing.lg,

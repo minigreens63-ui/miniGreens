@@ -55,7 +55,9 @@ export default function ProductsClient({
 }) {
   const [tab, setTab] = useState<Tab>("all");
   const [selected, setSelected] = useState<Product | null>(null);
-  const [editFields, setEditFields] = useState({ price: "", stock: "" });
+  const [editFields, setEditFields] = useState({ name: "", price: "", stock: "" });
+  const [editExistingImages, setEditExistingImages] = useState<string[]>([]);
+  const [editNewImages, setEditNewImages] = useState<ImageDraft[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [slugTouched, setSlugTouched] = useState(false);
@@ -64,6 +66,7 @@ export default function ProductsClient({
   const [ingredientInput, setIngredientInput] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
 
   const categoryById = useMemo(
@@ -78,11 +81,32 @@ export default function ProductsClient({
 
   function openDrawer(p: Product) {
     setSelected(p);
-    setEditFields({ price: String(p.price), stock: String(p.stock) });
+    setEditFields({ name: p.name, price: String(p.price), stock: String(p.stock) });
+    setEditExistingImages(p.images ?? []);
+    setEditNewImages([]);
   }
 
   function closeDrawer() {
+    editNewImages.forEach((d) => URL.revokeObjectURL(d.preview));
+    setEditNewImages([]);
     setSelected(null);
+  }
+
+  function removeExistingEditImage(index: number) {
+    setEditExistingImages((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function handleAddEditImages(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const drafts = Array.from(files).map((file) => ({ file, preview: URL.createObjectURL(file) }));
+    setEditNewImages((prev) => [...prev, ...drafts]);
+  }
+
+  function removeEditImageDraft(index: number) {
+    setEditNewImages((prev) => {
+      URL.revokeObjectURL(prev[index].preview);
+      return prev.filter((_, i) => i !== index);
+    });
   }
 
   function toggleFlag(p: Product, key: "is_available" | "is_featured" | "is_preorder") {
@@ -92,13 +116,23 @@ export default function ProductsClient({
     });
   }
 
-  function handleSavePricing(p: Product) {
+  function handleSaveDetails(p: Product) {
+    const name = editFields.name.trim();
     const price = Number(editFields.price);
     const stock = Number(editFields.stock);
-    if (Number.isNaN(price) || price < 0 || Number.isNaN(stock) || stock < 0) return;
+    if (!name || Number.isNaN(price) || price < 0 || Number.isNaN(stock) || stock < 0) return;
+    setIsUploading(true);
     startTransition(async () => {
-      await updateProduct(p.id, { price, stock });
-      closeDrawer();
+      try {
+        const uploaded = await uploadProductImages(editNewImages);
+        const images = [...editExistingImages, ...uploaded];
+        await updateProduct(p.id, { name, price, stock, images });
+        editNewImages.forEach((d) => URL.revokeObjectURL(d.preview));
+        setEditNewImages([]);
+        setSelected(null);
+      } finally {
+        setIsUploading(false);
+      }
     });
   }
 
@@ -143,11 +177,11 @@ export default function ProductsClient({
     setIngredients((prev) => prev.filter((_, i) => i !== index));
   }
 
-  async function uploadProductImages(): Promise<string[]> {
-    if (imageDrafts.length === 0) return [];
+  async function uploadProductImages(drafts: ImageDraft[]): Promise<string[]> {
+    if (drafts.length === 0) return [];
     const supabase = createSupabaseBrowserClient();
     const urls: string[] = [];
-    for (const { file } of imageDrafts) {
+    for (const { file } of drafts) {
       const ext = file.name.split(".").pop() || "jpg";
       const path = `${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from("product-images").upload(path, file);
@@ -164,7 +198,7 @@ export default function ProductsClient({
     setIsUploading(true);
     startTransition(async () => {
       try {
-        const images = await uploadProductImages();
+        const images = await uploadProductImages(imageDrafts);
         await createProduct({
           name: form.name.trim(),
           slug: form.slug.trim(),
@@ -295,6 +329,14 @@ export default function ProductsClient({
             </div>
 
             <div className="px-6 py-5 space-y-6">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Name</label>
+                <input
+                  value={editFields.name}
+                  onChange={(e) => setEditFields((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-[#3D7A52] transition-all"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Price (₹)</label>
@@ -317,12 +359,63 @@ export default function ProductsClient({
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Images</label>
+                <div className="flex flex-wrap gap-2">
+                  {editExistingImages.map((src, i) => (
+                    <div key={src} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 group">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeExistingEditImage(i)}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={11} weight="bold" />
+                      </button>
+                    </div>
+                  ))}
+                  {editNewImages.map((draft, i) => (
+                    <div key={draft.preview} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 group">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={draft.preview} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeEditImageDraft(i)}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={11} weight="bold" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => editFileInputRef.current?.click()}
+                    className="w-16 h-16 flex items-center justify-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:border-[#3D7A52] hover:text-[#3D7A52] transition-colors"
+                  >
+                    <Plus size={20} />
+                  </button>
+                  <input
+                    ref={editFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      handleAddEditImages(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+              </div>
+
               <button
-                disabled={isPending}
-                onClick={() => handleSavePricing(selected)}
+                disabled={isPending || isUploading}
+                onClick={() => handleSaveDetails(selected)}
                 className="w-full py-2 text-sm font-semibold rounded-xl bg-[#0A2416] text-white transition-all active:scale-[0.97] disabled:opacity-40"
               >
-                Save Price & Stock
+                {isUploading ? "Uploading…" : "Save Changes"}
               </button>
 
               <div>

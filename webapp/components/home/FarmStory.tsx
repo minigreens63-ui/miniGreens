@@ -48,10 +48,10 @@ export function FarmStory() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
-                href="/shop?category=microgreens"
+                href="/shop"
                 className="inline-flex items-center gap-2 rounded-full bg-(--color-sun) px-6 py-3 text-sm font-semibold text-(--color-forest) transition-colors hover:bg-(--color-sun-dark)"
               >
-                Shop Fresh Microgreens
+                Shop Tea Blends
                 <ArrowRight size={15} weight="bold" />
               </Link>
               <Link

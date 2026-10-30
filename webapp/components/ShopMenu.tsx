@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CaretDown } from "@phosphor-icons/react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { VISIBLE_CATEGORY_SLUGS } from "@/lib/categories";
 
 type ShopItem = { label: string; href: string; note: string };
 
@@ -29,7 +30,9 @@ function useShopItems(): ShopItem[] {
       .then(({ data }) => {
         if (cancelled || !data) return;
         setItems(
-          data.map((c) => ({
+          data
+            .filter((c) => VISIBLE_CATEGORY_SLUGS.includes(c.slug))
+            .map((c) => ({
             label: MENU_COPY[c.slug]?.label ?? c.name,
             note: MENU_COPY[c.slug]?.note ?? c.description ?? "",
             href: `/shop?category=${c.slug}`,

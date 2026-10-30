@@ -6,13 +6,22 @@ import { syncPushTokenForUser } from '../lib/notifications';
 import type { Database } from '../types/database';
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
-type PartnerStatus = Database['public']['Tables']['partners']['Row']['status'];
+
+// Supabase's own error strings are written for developers (e.g. its rate-limit
+// message reads "For security purposes, you can only request this after 46
+// seconds."), not for a checkout/login screen. Known cases get friendlier
+// copy; anything unrecognized still falls through to the raw message rather
+// than risk hiding a real, useful error behind a generic one.
+function friendlyAuthError(message: string): string {
+  if (/security purposes|only request this after/i.test(message)) {
+    return "You're trying too often — please wait a moment and try again.";
+  }
+  return message;
+}
 
 interface AuthState {
   session: Session | null;
   profile: ProfileRow | null;
-  /** Latest partner application status, or null if the user never applied. */
-  partnerStatus: PartnerStatus | null;
   isLoading: boolean;
   initialize: () => () => void;
   fetchProfile: (userId: string) => Promise<void>;
@@ -26,12 +35,12 @@ interface AuthState {
     dateOfBirth?: string | null,
   ) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<{ error: string | null }>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
   profile: null,
-  partnerStatus: null,
   isLoading: true,
 
   initialize: () => {
@@ -45,7 +54,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (session) {
         get().fetchProfile(session.user.id);
       } else {
-        set({ profile: null, partnerStatus: null });
+        set({ profile: null });
       }
     });
 
@@ -74,12 +83,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const retry = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (retry.data) set({ profile: retry.data });
     }
-    const { data: partner } = await supabase
-      .from('partners')
-      .select('status')
-      .eq('profile_id', userId)
-      .maybeSingle();
-    set({ partnerStatus: partner?.status ?? null });
     syncPushTokenForUser(userId).catch(() => {});
   },
 
@@ -89,13 +92,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       email,
       options: { shouldCreateUser: true },
     });
-    return { error: error?.message ?? null };
+    return { error: error ? friendlyAuthError(error.message) : null };
   },
 
   verifyCode: async (email, code) => {
     const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
     if (error || !data.user) {
-      return { error: error?.message ?? 'Could not verify the code.', needsProfile: false };
+      return { error: error ? friendlyAuthError(error.message) : 'Could not verify the code.', needsProfile: false };
     }
     const { data: profile } = await supabase
       .from('profiles')
@@ -119,6 +122,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ session: null, profile: null, partnerStatus: null });
+    set({ session: null, profile: null });
+  },
+
+  deleteAccount: async () => {
+    const { data, error } = await supabase.functions.invoke('delete-account');
+    if (error) return { error: friendlyAuthError(error.message) };
+    if (data?.error) return { error: data.error as string };
+    await supabase.auth.signOut();
+    set({ session: null, profile: null });
+    return { error: null };
   },
 }));

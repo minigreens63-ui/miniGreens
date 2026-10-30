@@ -33,6 +33,31 @@ export function formatDobDisplay(iso: string | null | undefined): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+/**
+ * Validates a free-text "first delivery date" field (`YYYY-MM-DD`, matching
+ * the placeholder shown on the subscription screens) before it's sent to the
+ * DB — without this, a malformed string surfaces as a raw Postgres error.
+ * Returns an error message, or null if the date is valid and not in the past.
+ */
+export function validateDeliveryDateInput(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return 'Please enter a first delivery date.';
+  const m = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return 'Enter the delivery date as YYYY-MM-DD, e.g. 2026-09-28.';
+  const [, yyyy, mm, dd] = m;
+  const year = Number(yyyy);
+  const month = Number(mm);
+  const day = Number(dd);
+  const d = new Date(year, month - 1, day);
+  if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) {
+    return "That date doesn't exist — check the day and month.";
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (d < today) return 'Pick a delivery date that is today or later.';
+  return null;
+}
+
 /** True when the stored ISO DOB falls on today's month + day. */
 export function isBirthdayToday(iso: string | null | undefined): boolean {
   if (!iso) return false;

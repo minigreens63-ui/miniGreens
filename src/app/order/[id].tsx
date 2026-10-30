@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +20,8 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { supabase } from '../../lib/supabase';
-import { resolveImageSource, getProductPlaceholder } from '../../utils/placeholders';
+import { resolveImageSource } from '../../utils/placeholders';
+import { PlaceholderImage } from '../../components/ui/PlaceholderImage';
 import type { Database, OrderStatus, PaymentStatus } from '../../types/database';
 
 type OrderRow = Database['public']['Tables']['orders']['Row'];
@@ -179,7 +181,7 @@ export default function OrderDetailScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton} accessibilityLabel="Go back">
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -202,6 +204,7 @@ export default function OrderDetailScreen() {
             router.back();
           }}
           style={styles.headerButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -289,11 +292,15 @@ export default function OrderDetailScreen() {
           >
             <Card variant="outlined" padding="lg" style={styles.itemCard}>
               <View style={styles.itemRow}>
-                <Image
-                  source={resolveImageSource(item.image || getProductPlaceholder(item.product_name))}
-                  style={styles.itemImage}
-                  resizeMode="cover"
-                />
+                {item.image ? (
+                  <Image
+                    source={resolveImageSource(item.image)}
+                    style={styles.itemImage}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <PlaceholderImage label={item.product_name} style={styles.itemImage} />
+                )}
                 <View style={styles.itemInfo}>
                   <Typography variant="bodySmall" weight="semibold">{item.product_name}</Typography>
                   <Typography variant="caption" color={colors.textSecondary}>

@@ -18,6 +18,7 @@ import {
   Handshake,
   Tag,
   Stack,
+  ShieldCheck,
 } from "@phosphor-icons/react";
 import { logout } from "@/app/dashboard/login/actions";
 
@@ -36,10 +37,13 @@ const navLinks = [
 
 const comingSoon: { label: string; icon: typeof Users }[] = [];
 
-export default function Sidebar({ email }: { email: string }) {
+export default function Sidebar({ email, isSuperAdmin }: { email: string; isSuperAdmin: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const initials = email ? email.slice(0, 2).toUpperCase() : "AD";
+  const links = isSuperAdmin
+    ? [...navLinks, { href: "/dashboard/admins", label: "Admins", icon: ShieldCheck, active: true }]
+    : navLinks;
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -58,7 +62,7 @@ export default function Sidebar({ email }: { email: string }) {
         <p className="px-3 pb-2 text-[10px] font-semibold tracking-widest uppercase text-slate-400">
           Main
         </p>
-        {navLinks.map(({ href, label, icon: Icon }) => {
+        {links.map(({ href, label, icon: Icon }) => {
           const isActive =
             href === "/dashboard"
               ? pathname === "/dashboard"

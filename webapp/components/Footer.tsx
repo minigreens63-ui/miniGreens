@@ -15,9 +15,7 @@ const COLUMNS = [
   {
     title: "Shop",
     links: [
-      { label: "All Products", href: "/shop" },
-      { label: "Tea Blends", href: "/shop?category=tea-blends" },
-      { label: "Fresh Microgreens", href: "/shop?category=microgreens" },
+      { label: "All Tea Blends", href: "/shop" },
       { label: "Subscriptions", href: "/subscriptions" },
     ],
   },
@@ -26,7 +24,6 @@ const COLUMNS = [
     links: [
       { label: "Our Story", href: "/about" },
       { label: "Journal", href: "/blog" },
-      { label: "Become a Partner", href: "/partner/apply" },
       { label: "Women Who Grow", href: "/women-who-grow" },
       { label: "Contact", href: "/contact" },
     ],
@@ -59,7 +56,7 @@ export function Footer() {
           <div>
             <Logo width={116} color="#ffffff" accentColor="#ffffff" />
             <p className="mt-4 max-w-56 text-xs leading-relaxed text-white/60">
-              {BRAND_CLAIM_SHORT}. Handpicked microgreens grown with care, delivered fresh to your doorstep.
+              {BRAND_CLAIM_SHORT}. Handpicked microgreen tea blends grown with care, delivered fresh to your doorstep.
             </p>
           </div>
 

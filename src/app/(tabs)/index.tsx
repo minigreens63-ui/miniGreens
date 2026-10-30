@@ -1,14 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  TextInput,
-  Image,
-  Pressable,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, TouchableOpacity, TextInput, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,6 +36,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useCartStore } from '../../store/useCartStore';
 import { supabase } from '../../lib/supabase';
 import { resolveImageSource } from '../../utils/placeholders';
+import { PlaceholderImage } from '../../components/ui/PlaceholderImage';
 import { isBirthdayToday } from '../../utils/date';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -60,20 +53,6 @@ const BG_RGB = '243,247,234';
 const TEA_HERO = require('../../../assets/tea-hero.png');
 // Promo card background — bright microgreen tray with pale space on the left.
 const PROMO_BG = require('../../../assets/bannerpic.png');
-
-// Local art for the circular category row, matched by category name. Falls back
-// to the Supabase `category.image` when nothing matches.
-const CATEGORY_ART: { re: RegExp; img: number }[] = [
-  { re: /tea\s*blend|blend/i, img: require('../../../assets/cat-tea-blends.png') },
-  { re: /loose|leaf/i, img: require('../../../assets/cat-loose-leaf.png') },
-  { re: /kit/i, img: require('../../../assets/cat-tea-kits.png') },
-  { re: /accessor/i, img: require('../../../assets/cat-accessories.png') },
-  { re: /tea|microgreen|green/i, img: require('../../../assets/cat-microgreens.png') },
-];
-function categoryArt(name: string): number | null {
-  for (const c of CATEGORY_ART) if (c.re.test(name)) return c.img;
-  return null;
-}
 
 // "Bowls" isn't a catalogue category in Supabase (no bowl products yet), but the
 // reference Home Screen shows it as a fourth tile. Render it locally from the
@@ -149,7 +128,11 @@ function FindYourBlendSection({ products, onProductPress }: { products: ReturnTy
                   onProductPress(b.slug);
                 }}
               >
-                <Image source={resolveImageSource(b.images[0])} style={blendStyles.rowImage} resizeMode="cover" />
+                {b.images[0] ? (
+                  <Image source={resolveImageSource(b.images[0])} style={blendStyles.rowImage} contentFit="cover" cachePolicy="memory-disk" />
+                ) : (
+                  <PlaceholderImage label={b.name} style={blendStyles.rowImage} />
+                )}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Typography variant="caption" weight="bold" numberOfLines={1}>{b.name}</Typography>
                   <Typography variant="caption" color={colors.textTertiary} numberOfLines={1} style={{ fontSize: 10 }}>
@@ -218,7 +201,11 @@ function SignatureProductSection({ products, onProductPress }: { products: Retur
     <View style={styles.section}>
       <View style={signatureStyles.card}>
         <View style={signatureStyles.imageWrap}>
-          <Image source={resolveImageSource(product.images[0])} style={signatureStyles.image} resizeMode="cover" />
+          {product.images[0] ? (
+            <Image source={resolveImageSource(product.images[0])} style={signatureStyles.image} contentFit="cover" cachePolicy="memory-disk" />
+          ) : (
+            <PlaceholderImage label={product.name} style={signatureStyles.image} />
+          )}
         </View>
         <View style={signatureStyles.content}>
           <Typography variant="caption" weight="bold" color={colors.primaryLight} style={{ letterSpacing: 1, fontSize: 9 }}>
@@ -259,10 +246,11 @@ const signatureStyles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.green[800],
     flexDirection: 'row',
-    minHeight: 180,
+    height: 180,
   },
   imageWrap: {
     width: '38%',
+    height: '100%',
     backgroundColor: colors.surfaceVariant,
   },
   image: {
@@ -270,7 +258,7 @@ const signatureStyles = StyleSheet.create({
     height: '100%',
   },
   content: {
-    flex: 1,
+    width: '62%',
     padding: spacing.lg,
     justifyContent: 'center',
   },
@@ -304,7 +292,7 @@ function FarmStorySection() {
         <Image
           source={PROMO_BG}
           style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
-          resizeMode="cover"
+          contentFit="cover" cachePolicy="memory-disk"
         />
         <LinearGradient
           colors={['rgba(20,38,25,0.92)', 'rgba(20,38,25,0.55)']}
@@ -370,80 +358,6 @@ const farmStyles = StyleSheet.create({
   },
 });
 
-// ─── Business CTA — general "order in bulk / become a partner" strip, shown
-//     to every visitor (mirrors webapp's BusinessStrip + PartnerSection) ─────
-
-const BUSINESS_CHIPS: { icon: keyof typeof Ionicons.glyphMap; label: string; type: string }[] = [
-  { icon: 'cafe-outline', label: 'Cafés', type: 'cafe' },
-  { icon: 'restaurant-outline', label: 'Restaurants', type: 'restaurant' },
-  { icon: 'storefront-outline', label: 'Shops', type: 'shop' },
-  { icon: 'barbell-outline', label: 'Gyms & wellness', type: 'fitness_wellness' },
-];
-
-function BusinessCTASection() {
-  return (
-    <View style={styles.section}>
-      <View style={businessStyles.card}>
-        <Typography variant="caption" weight="bold" color={colors.primary} style={{ letterSpacing: 1, fontSize: 9 }}>
-          FOR BUSINESS
-        </Typography>
-        <Typography variant="h3" color={colors.text} style={{ marginTop: spacing.xs }}>
-          Order Fresh Greens in Bulk
-        </Typography>
-        <Typography variant="bodySmall" color={colors.textSecondary} style={{ marginTop: spacing.xs }}>
-          Regular supply for your menu, shelves or members, with wholesale pricing.
-        </Typography>
-        <View style={businessStyles.chipRow}>
-          {BUSINESS_CHIPS.map((c) => (
-            <TouchableOpacity
-              key={c.type}
-              style={businessStyles.chip}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(`/partner/apply?type=${c.type}` as any);
-              }}
-            >
-              <Ionicons name={c.icon} size={14} color={colors.primary} />
-              <Typography variant="caption" weight="semibold">{c.label}</Typography>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <Button
-          title="Register Your Business"
-          onPress={() => router.push('/partner/apply?type=cafe' as any)}
-          style={{ marginTop: spacing.lg }}
-        />
-      </View>
-    </View>
-  );
-}
-
-const businessStyles = StyleSheet.create({
-  card: {
-    borderRadius: borderRadius.card,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    padding: spacing.lg,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    borderRadius: borderRadius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm - 2,
-  },
-});
-
 // ─── Birthday / DOB nudge — mirrors webapp's JoinSection perk, reusing the
 //     existing account system instead of a separate mailing list ────────────
 
@@ -482,6 +396,7 @@ function DobNudgeBanner() {
         }}
         hitSlop={10}
         style={{ marginLeft: spacing.sm }}
+        accessibilityLabel="Dismiss"
       >
         <Ionicons name="close" size={16} color={colors.textTertiary} />
       </TouchableOpacity>
@@ -493,7 +408,6 @@ function DobNudgeBanner() {
 
 const TRUST_ITEMS: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
   { icon: 'bicycle', label: 'Free delivery ₹499+' },
-  { icon: 'star', label: '4.9 rated' },
   { icon: 'leaf', label: '100% organic' },
 ];
 
@@ -579,6 +493,7 @@ function OffersBanner() {
         }}
         hitSlop={10}
         style={{ marginLeft: spacing.sm }}
+        accessibilityLabel="Dismiss"
       >
         <Ionicons name="close" size={16} color={colors.textTertiary} />
       </TouchableOpacity>
@@ -652,7 +567,7 @@ function BirthdayBanner() {
             : offer?.description || 'Enjoy a little something from us today.'}
         </Typography>
       </View>
-      <TouchableOpacity onPress={() => setDismissed(true)} hitSlop={10}>
+      <TouchableOpacity onPress={() => setDismissed(true)} hitSlop={10} accessibilityLabel="Dismiss">
         <Ionicons name="close" size={18} color="rgba(255,255,255,0.6)" />
       </TouchableOpacity>
     </View>
@@ -673,7 +588,7 @@ function TeaHeroCard({ onPress }: { onPress: () => void }) {
       <Image
         source={TEA_HERO}
         style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
-        resizeMode="cover"
+        contentFit="cover" cachePolicy="memory-disk"
       />
       <LinearGradient
         colors={['rgba(228,238,202,0.8)', 'rgba(228,238,202,0.32)', 'rgba(228,238,202,0.04)', 'rgba(228,238,202,0)']}
@@ -685,17 +600,9 @@ function TeaHeroCard({ onPress }: { onPress: () => void }) {
       />
 
       <View style={styles.heroText}>
-        <View style={styles.heroKickerRow}>
-          <Typography variant="caption" weight="bold" color={colors.accentSoft} style={styles.heroKicker}>
-            NATURE IN A CUP
-          </Typography>
-          <View style={styles.heroRatingChip}>
-            <Ionicons name="star" size={9} color={colors.secondary} />
-            <Typography variant="caption" weight="bold" color={colors.textPrimary} style={styles.heroRatingText}>
-              4.9
-            </Typography>
-          </View>
-        </View>
+        <Typography variant="caption" weight="bold" color={colors.accentSoft} style={styles.heroKicker}>
+          NATURE IN A CUP
+        </Typography>
         <Typography variant="h3" color={colors.primary} style={styles.heroTitle}>
           Microgreen Tea
         </Typography>
@@ -722,73 +629,23 @@ function TeaHeroCard({ onPress }: { onPress: () => void }) {
             <View style={styles.heroBadgeIcon}>
               <Ionicons name={b.icon} size={15} color={colors.primary} />
             </View>
-            <Typography
-              variant="caption"
-              color={colors.textSecondary}
-              align="center"
-              style={styles.heroBadgeLabel}
-            >
-              {b.label}
-            </Typography>
+            <View style={styles.heroBadgeLabelWrap}>
+              <Typography
+                variant="caption"
+                color={colors.text}
+                weight="bold"
+                align="center"
+                style={styles.heroBadgeLabel}
+              >
+                {b.label}
+              </Typography>
+            </View>
           </View>
         ))}
       </View>
     </View>
   );
 }
-
-function PartnerBanner() {
-  const role = useAuthStore((s) => s.profile?.role);
-  const partnerStatus = useAuthStore((s) => s.partnerStatus);
-  const approved = role === 'partner' || partnerStatus === 'approved';
-  if (!approved && partnerStatus !== 'pending') return null;
-
-  return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      style={partnerStyles.card}
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push(approved ? '/partner/business-order' : '/partner/submitted');
-      }}
-    >
-      <View style={partnerStyles.icon}>
-        <Ionicons name={approved ? 'storefront-outline' : 'time-outline'} size={20} color={colors.primaryDark} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Typography variant="body" weight="bold" color={colors.text}>
-          {approved ? 'MGC Partner' : 'Partner application under review'}
-        </Typography>
-        <Typography variant="bodySmall" color={colors.textSecondary}>
-          {approved ? 'Place a business order' : "We'll email you once it's approved"}
-        </Typography>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-    </TouchableOpacity>
-  );
-}
-
-const partnerStyles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.primaryLight,
-  },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-  },
-});
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -857,7 +714,12 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <Animated.View style={[styles.header, headerStyle]}>
+          <View pointerEvents="none" style={styles.headerFlourish}>
+            <Ionicons name="leaf" size={64} color={colors.green[200]} style={styles.flourishLeafBack} />
+            <Ionicons name="leaf" size={44} color={colors.primaryLight} style={styles.flourishLeafFront} />
+          </View>
           <View style={styles.headerText}>
+            <Typography variant="label" color={colors.accentSoft}>Home</Typography>
             <View style={styles.headerNameRow}>
               <Typography
                 variant="h2"
@@ -880,6 +742,7 @@ export default function HomeScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/notifications');
               }}
+              accessibilityLabel={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
             >
               <Ionicons name="notifications-outline" size={20} color={colors.text} />
               {unreadCount > 0 && <View style={styles.bellDot} />}
@@ -890,6 +753,7 @@ export default function HomeScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/cart');
               }}
+              accessibilityLabel={cartCount > 0 ? `Cart, ${cartCount} items` : 'Cart'}
             >
               <Ionicons name="bag-outline" size={20} color={colors.text} />
               {cartCount > 0 && (
@@ -912,8 +776,6 @@ export default function HomeScreen() {
             onPress={handleSearchPress}
           />
         </Animated.View>
-
-        <PartnerBanner />
 
         {/* Trust strip */}
         <Animated.View style={searchStyle}>
@@ -948,7 +810,6 @@ export default function HomeScreen() {
                     key={cat.id}
                     category={cat}
                     variant="circle"
-                    imageOverride={categoryArt(cat.name)}
                     index={i}
                     active={cat.id === selectedCat}
                     onPress={() => {
@@ -1000,7 +861,7 @@ export default function HomeScreen() {
             <Image
               source={PROMO_BG}
               style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
-              resizeMode="cover"
+              contentFit="cover" cachePolicy="memory-disk"
             />
             <LinearGradient
               colors={['rgba(30,52,34,0.96)', 'rgba(30,52,34,0.6)', 'rgba(30,52,34,0.12)']}
@@ -1181,7 +1042,7 @@ export default function HomeScreen() {
                   <Image
                     source={resolveImageSource(article.image)}
                     style={styles.articleImage}
-                    resizeMode="cover"
+                    contentFit="cover" cachePolicy="memory-disk"
                   />
                   <View style={styles.articleCategoryPill}>
                     <Typography variant="caption" color={colors.secondary} weight="bold" style={{ fontSize: 9, letterSpacing: 1 }}>
@@ -1284,7 +1145,6 @@ export default function HomeScreen() {
         </Animated.View>
 
         <FarmStorySection />
-        <BusinessCTASection />
 
         {/* Footer */}
         <View style={styles.footer}>
@@ -1309,11 +1169,34 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   header: {
+    position: 'relative',
+    overflow: 'hidden',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing['2xl'],
+  },
+  headerFlourish: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    width: 100,
+    height: 100,
+  },
+  flourishLeafBack: {
+    position: 'absolute',
+    top: 2,
+    right: 0,
+    opacity: 0.45,
+    transform: [{ rotate: '18deg' }],
+  },
+  flourishLeafFront: {
+    position: 'absolute',
+    top: 34,
+    right: 32,
+    opacity: 0.5,
+    transform: [{ rotate: '-12deg' }],
   },
   headerText: {
     flex: 1,
@@ -1432,29 +1315,10 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     zIndex: 2,
   },
-  heroKickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
   heroKicker: {
     letterSpacing: 1.4,
     fontSize: 8.5,
-    marginBottom: 0,
-  },
-  heroRatingChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: borderRadius.pill,
-    ...shadows.sm,
-  },
-  heroRatingText: {
-    fontSize: 9.5,
+    marginBottom: 6,
   },
   heroTitle: {
     fontSize: 23,
@@ -1490,7 +1354,13 @@ const styles = StyleSheet.create({
   },
   heroBadge: {
     alignItems: 'center',
-    width: 54,
+    width: 58,
+  },
+  heroBadgeLabelWrap: {
+    backgroundColor: 'rgba(255,255,255,0.88)',
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
   heroBadgeIcon: {
     width: 28,
@@ -1503,7 +1373,7 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   heroBadgeLabel: {
-    fontSize: 8,
+    fontSize: 8.5,
     lineHeight: 10,
   },
   brandName: {

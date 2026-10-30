@@ -6,6 +6,7 @@ import { Minus, Plus, Repeat, PencilSimple } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { CheckoutForm, type DeliveryDetails } from "@/components/CheckoutForm";
+import { VISIBLE_CATEGORY_SLUGS } from "@/lib/categories";
 
 interface ProductOption {
   id: string;
@@ -36,11 +37,18 @@ export default function CustomSubscriptionPage() {
 
     const supabase = createSupabaseBrowserClient();
     supabase
-      .from("products")
-      .select("id, slug, name, price, unit")
-      .eq("is_available", true)
-      .order("name")
-      .then(({ data }) => {
+      .from("categories")
+      .select("id, slug")
+      .in("slug", VISIBLE_CATEGORY_SLUGS)
+      .then(async ({ data: cats }) => {
+        const catIds = (cats ?? []).map((c) => c.id);
+        const { data } = await supabase
+          .from("products")
+          .select("id, slug, name, price, unit, category_id")
+          .eq("is_available", true)
+          .in("category_id", catIds)
+          .order("name");
+
         const rows = (data ?? []) as ProductOption[];
         setProducts(rows);
         const match = preselect ? rows.find((p) => p.slug === preselect) : undefined;

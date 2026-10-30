@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -82,6 +82,19 @@ export default function EditProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // If `profile` is still loading when this screen mounts, the fields above
+  // seed as empty — re-sync once it actually arrives. Keyed on `id` (not on
+  // every profile change) so a post-save refetch doesn't clobber in-progress edits.
+  const syncedProfileId = useRef(profile?.id);
+  useEffect(() => {
+    if (profile && profile.id !== syncedProfileId.current) {
+      syncedProfileId.current = profile.id;
+      setFullName(profile.full_name ?? '');
+      setPhone(profile.phone ?? '');
+      setDob(formatDobDisplay(profile.date_of_birth));
+    }
+  }, [profile]);
+
   const handleSave = async () => {
     if (!profile) return;
     let dobIso: string | null = null;
@@ -138,6 +151,7 @@ export default function EditProfileScreen() {
             router.back();
           }}
           style={styles.headerButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>

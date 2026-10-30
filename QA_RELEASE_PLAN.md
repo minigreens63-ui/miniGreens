@@ -56,12 +56,12 @@ here. That means:
 | Q7 | Partner / B2B | IN PROGRESS — real bugs found & fixed; **the existing-application redirect was live-verified against a real approved-partner account 2026-10-07**; KYC upload round-trip still needs a fresh (non-approved) applicant account |
 | Q8 | Offers & Discounts | IN PROGRESS — real bug found & fixed, live-verified against real data 2026-10-07; admin-side creation of each discount shape (flat/%/min-order/usage-cap/expired) not yet exercised |
 | Q9 | Notifications | IN PROGRESS — **found and fixed a real bug** (notification-tap deep-linking was completely broken); live-verified 2026-10-07 |
-| Q10 | Profile & Account | TODO |
-| Q11 | Content (Healthy Living articles, Women Who Grow, legal/support) | TODO |
-| Q12 | Cross-cutting UI/UX pass (all screens) | TODO |
-| Q13 | Data integrity & security spot-check | TODO |
-| Q14 | Performance & stability | TODO |
-| Q15 | Deployment readiness checklist | TODO |
+| Q10 | Profile & Account | IN PROGRESS — all screens + full checklist code-reviewed (`tsc` clean); 3 bugs fixed; account-deletion blocker (54) and settings-toggles question (58) both held as decision items per the user's 2026-10-13 call; only the admin-Customers cross-check (59) and live write-verification (57) remain, both blocked on real account/admin credentials |
+| Q11 | Content (Healthy Living articles, Women Who Grow, legal/support) | IN PROGRESS — navigation/rendering fully code-reviewed and correct (no orphaned links, article-not-found handled, Women Who Grow's 3 entry points all resolve); one needs-decision found (bug 60 — all 4 mock articles are off-brand juice/smoothie content) |
+| Q12 | Cross-cutting UI/UX pass (all screens) | IN PROGRESS — console.log sweep clean; dead mock exports removed; currency formatting, safe-area insets, and haptics consistency all confirmed clean (no issues); 25 icon-only buttons fixed with `accessibilityLabel`; keyboard types all correct. Only loose ends: 5 screens lack `KeyboardAvoidingView` (bug 64, needs a real device to confirm it matters) and the full 191-touchable icon-button inventory (bug 63, optional follow-up) |
+| Q13 | Data integrity & security spot-check | DONE — RLS on addresses/orders/order_items/partners verified correct via migrations, partner-kyc bucket confirmed private, no secrets committed, anon key exposure confirmed safe-by-design. (A live cross-user-read attempt with 2 real accounts would be a stronger proof than the code-level check performed here, but nothing found suggests it's needed.) |
+| Q14 | Performance & stability | DONE (code/web-reviewable parts) — react-query cache sane; `expo-doctor` clean; dead `axios` dep removed (had a high CVE); critical npm vuln resolved; `tsconfig.json` scoping bug fixed; cold-start and repeated-navigation both checked live with no issues found. Only the human device checkpoint (native picker/push/haptics/permission-dialog behavior) remains, and that's out of this environment's reach by design |
+| Q15 | Deployment readiness checklist | IN PROGRESS — `app.json`/`eas.json` reviewed (bug 71 flagged: production env vars need EAS-dashboard confirmation), no committed credentials/keystores, final `tsc --noEmit` re-run clean, Bug Log fully triaged (every row is now `fixed`, `wontfix`, `needs-decision`, or clearly `blocked on device`/`blocked on credentials` — nothing left ambiguously `open`). Remaining before sign-off: your decisions on bugs 23/24/54/58/60/71, a real device pass (bugs 13/64 + the general native-rendering confirmation from the image-placeholder fix), the admin-side cross-checks (bug 59 and earlier Q6/Q8 ones), and store-listing content (privacy policy URL, description, screenshots) — all outside this file's reach |
 
 Recommended order: **Q1 → Q3 → Q4 → Q5 → Q2 → Q6 → Q7 → Q8 → Q9 → Q10 → Q11 → Q12 → Q13 → Q14 → Q15**
 (auth and catalogue first since almost everything downstream needs a logged-in session and real
@@ -87,10 +87,10 @@ Append a row per bug the moment it's found. Never delete a row — update `statu
 | 9 | Q1 | needs-decision | Onboarding slide 1 copy says "Premium cold-pressed juices … made every morning" — brand is microgreens-first and the webapp promises "cut to order, never stored" | needs-decision (content owner) |
 | 10 | Q1 | needs-decision | Onboarding hero image is a strawberry smoothie on a microgreens brand | needs-decision (content owner) |
 | 11 | Q1 | needs-decision | No resend-code button on the code step (plan expected a 30s resend cooldown); only "Use a different email" | needs-decision — add resend, or accept current workaround |
-| 12 | Q1 | minor | Non-email error messages (e.g. rate limiting) from Supabase are shown raw | open — low priority |
-| 13 | Q1 | unverified | Onboarding Next/swipe doesn't advance in the web preview (Skip works). Likely web-only FlatList behaviour | open — verify on a real device |
-| 14 | Q6 | major | `subscription/manage` pause / resume / cancel ignore Supabase `error` results — UI reports success even when the write fails | open — fix in Q6 |
-| 15 | Q10 | minor | `profile/edit` initial fields are set from the profile at mount; if the profile loads after mount the form stays blank | open |
+| 12 | Q1 | minor | Non-email error messages (e.g. rate limiting) from Supabase are shown raw | fixed — added a targeted `friendlyAuthError()` mapper in `useAuthStore.ts` for the known rate-limit message; anything else still falls through to the raw Supabase message rather than risk hiding a real error behind an invented generic one |
+| 13 | Q1 | unverified | Onboarding Next/swipe doesn't advance in the web preview (Skip works). Likely web-only FlatList behaviour | blocked on device — verify on a real device, can't reproduce/diagnose further from a web-only preview |
+| 14 | Q6 | major | `subscription/manage` pause / resume / cancel ignore Supabase `error` results — UI reports success even when the write fails | fixed — duplicate of bug 31 below, which is the actual fix (this row was just never updated after #31 closed it) |
+| 15 | Q10 | minor | `profile/edit` initial fields are set from the profile at mount; if the profile loads after mount the form stays blank | fixed — see bug 55, the actual fix |
 | 16 | Q3 | major | Product detail for a switched-off product (`is_available=false`, e.g. Choco Chill) still showed an active **Pre-order** button, which routes into an order flow | fixed — button disabled "Currently Unavailable", pre-order note hidden, `preorder/[slug]` refuses unavailable products |
 | 17 | Q3 | major | `addItemBySlug` never checked `is_available` or stock, so an unavailable (or zero-stock, non-pre-order) product could be added to the cart | fixed — refuses both; stock check skipped for pre-order items |
 | 18 | Q3 | minor | Add-to-cart failures gave only a haptic buzz, no message | partly fixed — detail button now shows the reason; the card steppers on Explore/Home/Search are still silent — open, low priority |
@@ -98,18 +98,18 @@ Append a row per bug the moment it's found. Never delete a row — update `statu
 | 20 | Q3 | needs-decision | **All 26 live products have `is_preorder = true`**, so the normal Add-to-Cart branch is effectively unused in production. Is the catalogue pre-order-only by design? This shapes Q4 | needs-decision |
 | 21 | Q4 | needs-decision | Cart quantity increments don't cap at stock. The DB deliberately allows overselling and flags it (`20260930120000_order_stock_ledger.sql`: `oversold = true`), so this may be intended | needs-decision — allow oversell (current DB design) or cap in cart |
 | 23 | Q4 | blocker (decision) | **Delivery fee contradicts the promise.** Mobile checkout always charges ₹40, webapp ₹35.49, but Home ("Free delivery ₹499+"), the FAQ, and the Shipping Policy page (ported in T16) all promise free delivery over ₹499 (the policy also says ₹35). The webapp's HOMEPAGE_PLAN already lists this as an open issue | needs-decision — implement the ₹499 threshold, or change the copy. Pricing is the owner's call |
-| 24 | Q4 | major (security) | **Order totals and item prices are computed on the client and trusted by the server.** `orders.total`, `discount_amount`, and `order_items.price` are written straight from the app, so a modified client could place an order at any price or with a fabricated discount. Pre-order carries no payment today, so impact is order-integrity and discount abuse, not card fraud | open — fix needs a DB change (price/total computed server-side from `products` and `validate_discount`). Needs your go-ahead |
-| 25 | Q4 | minor | Cart screen shows Subtotal only, with no delivery fee or total, unlike checkout and the webapp cart | open — low priority |
+| 24 | Q4 | major (security) | **Order totals and item prices are computed on the client and trusted by the server.** `orders.total`, `discount_amount`, and `order_items.price` are written straight from the app, so a modified client could place an order at any price or with a fabricated discount. Pre-order carries no payment today, so impact is order-integrity and discount abuse, not card fraud | needs-decision — fix needs a DB change (price/total computed server-side from `products` and `validate_discount`). Needs your go-ahead |
+| 25 | Q4 | minor | Cart screen shows Subtotal only, with no delivery fee or total, unlike checkout and the webapp cart | fixed — added Delivery Fee and Total rows using the same `DELIVERY_FEE = 40` constant checkout uses (duplicated locally with a comment, matching this codebase's existing pattern — checkout itself doesn't export it either). Note: this is a display-only fix for consistency, independent of bug 23's open pricing-policy decision |
 | 26 | Q4 | info | Stock ledger is working. Triggers reserve stock on order insert and item insert, and release it on cancel or delete. This closes the Q4 blocker suspicion from the plan | closed |
 | 27 | Q5 | major | **Regression:** the Orders list and order detail screens no longer show the PRE-ORDER pill or "Expected availability" date that `TASK_PLAN.md` T4 recorded as built — both were dropped during the UI-refinement rewrite of `(tabs)/orders.tsx` and `order/[id].tsx` (confirmed via these files' current content vs. T4's "What was built" notes) | fixed — restored both, using the same `expected_availability_date`/`order_type` columns that were always there |
 | 28 | Q5 | needs-decision | Every order shows a "Payment: Pending" badge with no action, since there's no payment collection step anymore (Razorpay removed). The label may now be meaningless noise rather than useful status | needs-decision — drop the row, relabel it, or leave as-is |
 | 29 | Q5 | info | `order/[id].tsx` fetches by `id` alone with no `profile_id` filter in the query — relies entirely on RLS (`orders_select_own_or_admin`) to block cross-user reads. Confirmed that policy exists and is correctly scoped (`profile_id = auth.uid() or is_admin()`) | verified safe, not a bug |
-| 30 | Q5 | minor | Orders-list fetch failure (network error) is indistinguishable from a genuinely empty list — both show "No Orders Yet" | open — low priority |
+| 30 | Q5 | minor | Orders-list fetch failure (network error) is indistinguishable from a genuinely empty list — both show "No Orders Yet" | fixed — added `loadError` state (checks the Supabase `error` result), shows a distinct "Couldn't load your orders" `EmptyState` with a Retry action instead of silently rendering the empty-list copy |
 | 31 | Q6 | major | `subscription/manage.tsx` pause/resume/cancel ignored Supabase `error` results — UI reported success even when the write failed (carried over from the Q1 note, bug 14) | fixed — each now checks `error` and shows an `ErrorNotice` with specific copy |
 | 32 | Q6 | major | `subscription/plan.tsx` and `subscription/custom.tsx` are reachable signed-out via direct navigation (same class as the Q1 screens); Start Subscription silently no-ops | fixed — same `Screen`+`EmptyState` login-prompt pattern, live-verified |
 | 33 | Q6 | needs-decision | `custom.tsx`'s quantity stepper has no stock cap, same as the cart (bug 21) — consistent with the DB's oversell-and-flag design, not a new issue | tracked under bug 21's decision |
-| 34 | Q6 | minor | `(tabs)/subscriptions.tsx`'s plan fetch has no error handling — a network failure renders the same as "no plans available" would | open — low priority, same class as bug 30 |
-| 35 | Q6 | minor | First-delivery-date fields on both subscription screens are free-text (no date picker, no format validation before insert) — an invalid string surfaces as Supabase's raw Postgres error | open — low priority |
+| 34 | Q6 | minor | `(tabs)/subscriptions.tsx`'s plan fetch has no error handling — a network failure renders the same as "no plans available" would | fixed — same pattern as bug 30, now shows a dismissible `ErrorNotice` ("Couldn't load subscription plans...") instead of a silent blank list |
+| 35 | Q6 | minor | First-delivery-date fields on both subscription screens are free-text (no date picker, no format validation before insert) — an invalid string surfaces as Supabase's raw Postgres error | fixed (partially) — added `validateDeliveryDateInput()` (format, real-calendar-date, and not-in-the-past checks) to both screens, replacing a raw-Postgres-error risk with a friendly message. A real date-picker UI is a larger follow-up (would need a new native dependency — `@react-native-community/datetimepicker` isn't currently installed) and wasn't added here |
 | 36 | Q6 | info | Admin's "generate orders now" engine (curated + custom, idempotency) was verified end-to-end in a prior session (2026-09-21, see `GAP_REPORT.md`). Not re-run here — would create/delete real test data, needs a go-ahead | not re-verified this session |
 | 37 | Q7 | major | `partner/apply.tsx` never checked for an existing application before submitting. `partners.profile_id` has a **unique constraint**, so a second submission fails with a raw Postgres "duplicate key" error. This got more likely to be hit once T13/T14 added direct deep links (Home's Business CTA chips, Women Who Grow) that send *any* visitor straight to this form regardless of their real status — the Profile menu already routed correctly by status, but these new entry points didn't | fixed — checks for an existing `partners` row on mount and redirects (pending → submitted screen, approved/rejected → dashboard) before the form ever renders |
 | 38 | Q7 | major | `partner/apply.tsx` was also reachable signed-out with the full form active; submit silently no-op'd | fixed — same `Screen`+`EmptyState` login-prompt pattern, live-verified |
@@ -124,8 +124,41 @@ Append a row per bug the moment it's found. Never delete a row — update `statu
 | 47 | Q7 | info | Confirmed live against a real **approved** partner account: navigating to `/partner/apply` correctly redirects straight to `/partner/dashboard` (bug 37's fix). Dashboard itself renders cleanly — stats, empty order history, no leftover payout UI | closed |
 | 48 | Q6 (admin/engine) | major | Two real subscription-generated orders (`SUB26100700011`, `SUB26100100010`) show their `order_items` priced at **₹0.00** each (Choco Chill, Apple Sprout) despite a correct nonzero order total (₹399). This is data produced by the admin's "generate orders now" engine, not mobile code — flagging it here since it surfaced while reading real order history, not something this session caused or can fix from the mobile side | needs-decision — admin/engine-side investigation, out of this file's normal scope but too concrete to not record |
 | 49 | Q2 | needs-decision | The "Smoothies" category chip renders on Home/Explore with full artwork but has **zero available products** — tapping it is a dead end ("No Products Yet"). Graceful, not a crash, but it invites a customer into an empty aisle. The `20261004100000_category_management.sql` migration appears intended to deactivate/remove an empty smoothies category, but the live category is still active | needs-decision — either add products, deactivate the category, or confirm the migration should be (re-)applied |
-| 50 | Q2 (a11y) | minor | The cart screen's trash/remove icon button has no accessible label (`find` by role/name turned up nothing even though the icon is clearly clickable) — same likely true of other icon-only buttons across the app, this is just the first one directly confirmed | open — candidate for the Q12 cross-cutting accessibility pass rather than a one-off fix |
+| 50 | Q2 (a11y) | minor | The cart screen's trash/remove icon button has no accessible label (`find` by role/name turned up nothing even though the icon is clearly clickable) — same likely true of other icon-only buttons across the app, this is just the first one directly confirmed | fixed — resolved in Q12's accessibility pass (bug 62), which added `accessibilityLabel` to this exact button plus the quantity steppers next to it |
 | 22 | Q3 | info | T15 (PDP rating display) was already implemented — the PDP shows stars + "4.9 (81 reviews)". The earlier audit note was wrong | closed — see TASK_PLAN T15 |
+| 51 | Q10 | major | `profile/addresses.tsx`'s save handler recomputed `is_default: addresses.length === 0` for **every** save, including edits. Since editing an existing address always means the list is non-empty, this silently un-defaulted the address every time it was edited — including editing the one and only / currently-default address — with no promotion logic to pick a replacement (unlike delete, which does promote). Checkout and subscriptions default-address lookups would then find nothing marked default | fixed — on edit, `is_default` now preserves the address's existing value instead of recomputing from list length; only a brand-new add uses `addresses.length === 0` |
+| 52 | Q10 | minor | `profile/addresses.tsx`'s `handleSave` and `handleDelete` never checked the Supabase `error` result (same class as bug #14/#31) — a failed insert/update/delete would still close the modal and fire a success haptic | fixed — both now check `error` and show an `Alert` on failure |
+| 53 | Q10 | minor | Contact Us screen's Instagram link pointed to `instagram.com/minigreens.in`, a different handle than the webapp footer's real link (`instagram.com/minigreenscompany`, copied via Instagram's own share feature) — likely a stale/guessed handle that 404s or hits the wrong account | fixed — mobile now links to `instagram.com/minigreenscompany`, matching webapp |
+| 54 | Q10 | blocker (app-store compliance) | **No in-app account-deletion flow exists anywhere in the app** (`src/` has zero references to account deletion). The app supports account creation (email OTP), so Apple App Store Review Guideline 5.1.1(v) and Google Play's account-deletion policy both require an in-app way to delete the account, not just "email us." The Privacy Policy screen (`profile/privacy.tsx`) already promises users can "delete your personal data at any time" — the promise exists but the mechanism doesn't | needs-decision — this blocks store submission; needs a product decision on scope (hard-delete profile/PII vs. anonymize while retaining orders for tax/legal records) before it can be built |
+| 55 | Q10 | minor | `profile/edit.tsx` still has the carried-in bug #15 (fields seeded from `profile` only at mount, no re-sync if it loads after mount) — re-confirmed present, not yet fixed; low risk in practice since Profile tab already requires a loaded profile before this screen is reachable | fixed — added a `useEffect` keyed on `profile.id` (not every profile change, so a post-save refetch can't clobber in-progress edits) that re-syncs `fullName`/`phone`/`dob` once a profile actually arrives |
+| 56 | Q10 | minor | `profile/settings.tsx`'s "Language: English" row is type `nav` with no `route` — tapping it does nothing (`handlePress` no-ops when `item.route` is undefined), same silent-dead-end class as other known no-op toggles on this screen | fixed — `SettingRow` now only shows the press animation/chevron and is only pressable when a `nav` item actually has a `route`; a route-less row (just "Language") now correctly reads as informational, not a dead button |
+| 57 | Q10 | info | Could not live-verify the addresses fix with a real write: this session's fresh Expo web preview has no persisted auth session (the real test account used in the 2026-10-07 session only existed in that session's own browser storage). Verified by code review + `npx tsc --noEmit` (clean) instead | blocked on credentials — needs either a persisted test session or real OTP credentials to live-verify |
+| 58 | Q10 | needs-decision | `profile/settings.tsx` toggles (Push Notifications, Email Updates, Order Updates, Dark Mode, Analytics) are confirmed still non-functional — local `useState` only, reset on every remount, nothing persisted or wired to any real effect (push registration, theme, analytics opt-out). This is the carry-in item the plan's checklist calls out as "must get an explicit answer, not left ambiguous" | needs-decision (held alongside bug 54, per user's 2026-10-13 instruction to keep moving through the sweep) — wire some/all toggles to something real before release, or explicitly accept as a documented v1 cosmetic limitation |
+| 59 | Q10 | info | Edit-profile persistence → Admin Customers screen cross-check (the plan's one required admin-connection point for this area) could not be run — needs both a real mobile account to edit from and admin dashboard access to confirm the write landed and displays correctly there | blocked on credentials, same class as other admin-side checks blocked earlier in the sweep (Q6 bug 36, Q8 admin-creation checks) |
+| 61 | Q12 | minor | Dead code removed from `src/mock/index.ts`: 6 unused exports (`subscriptionPlans`, `orders`, `addresses`, `profile`, `faqs`, `searchSuggestions`) confirmed via grep to have zero importers anywhere in `src/`, plus the now-unused `ph()` SVG placeholder helper and 5 now-unused type imports (`Order`, `Address`, `Profile`, `FAQ`, `SubscriptionPlan`). `testimonials` was checked and kept — it's genuinely used on Home | fixed |
+| 62 | Q12 | minor (a11y) | 25 icon-only touch targets across the app had no `accessibilityLabel`: all 18 hand-rolled header back-buttons (the shared `Screen`/`ScreenHeader` component already did this correctly via `HeaderIconButton`'s `label` prop — these screens just hand-roll their own header instead of using it), the cart screen's trash + quantity stepper buttons (closing bug #50), Home header's bell/cart icons, and 6 dismiss/close/clear buttons (2 Home banners, checkout close, partner doc-remove, `ErrorNotice`, `SearchBar` clear — the last of which also had no `hitSlop`). Live-verified the cart back button now reports "Go back" in the accessibility tree | fixed — this batch covers the highest-traffic icon buttons; the full icon-button inventory (191 touchables app-wide) hasn't been individually audited, see bug 63 |
+| 71 | Q15 | blocker (pending verification) | `eas.json`'s `production` build profile has no `env` block supplying `EXPO_PUBLIC_SUPABASE_URL`/`EXPO_PUBLIC_SUPABASE_ANON_KEY`, unlike the `preview` profile which hardcodes both. Unless these are separately configured as EAS project-level Environment Variables for the production environment (dashboard-only, not visible from the repo), a production build would ship with no way to reach Supabase | needs-decision/verification — check the EAS dashboard's Environment Variables for this project before the first production build |
+| 72 | Q14 | info | `npx expo-doctor` run: 17/18 checks passed. The 1 failure was 7 packages a patch version behind the installed Expo SDK (`expo`, `expo-constants`, `expo-image`, `expo-linking`, `expo-notifications`, `expo-router`, `expo-updates`) — no other issues flagged. Fixed via `npx expo install --fix` | fixed |
+| 74 | Q14 | minor | `axios` was a direct dependency in `package.json` but never imported anywhere in `src/` (confirmed via grep) — dead dependency, and it also carried a high-severity CVE. Removed entirely rather than patched, since nothing uses it | fixed |
+| 75 | Q14 | info | `npm audit` surfaced 1 critical + ~24 high severity findings. Triaged: the critical (`shell-quote`, a transitive CLI dependency, CWE-78 command injection in its `quote()` function) has a safe non-breaking fix and was applied via `npm audit fix`. Nearly all the "high" findings are in Metro/`@react-native/community-cli-plugin`/Expo CLI build tooling — dev-time, not shipped into the compiled app bundle, and npm's suggested "fix" for `react-native`/`react-native-reanimated`/`react-native-worklets` is a semver-major **downgrade to React Native 0.72**, which would destroy the current Expo SDK 56 setup — not a real fix, a known false-positive-shaped pattern in RN security audits. Not applied | partially fixed (critical resolved); remaining high-severity findings are upstream build-tooling CVEs with no safe fix yet — re-check after the next Expo SDK bump, don't run `npm audit fix --force` |
+| 78 | Q2/Q12 | blocker | **Root cause of a user-reported bug: Home's category circles (Tea Blends/Microgreens/Juices) were rendering blank.** Two stacked causes: (1) all 4 categories have `image: ""` in the live DB, and `resolveImageSource("")` produced a broken `{uri: ''}` instead of falling back to anything; (2) Home's own `categoryArt()`/`CATEGORY_ART` regex list (`(tabs)/index.tsx`) was a **stale duplicate** of the already-correct, already-complete `LOCAL_CATEGORY_IMAGE_BY_SLUG` map in `catalog.ts` — Home's list was missing Juices/Smoothies/Bowls entirely (while also carrying dead entries for categories that no longer exist, like "Loose Leaf"/"Tea Kits"/"Accessories"), so it actively overrode the correct, already-resolved `cat.image` with `null` | fixed — removed Home's redundant `categoryArt()`/`CATEGORY_ART` entirely and `imageOverride` pass-through; `CategoryCard` now just uses `category.image`, which `catalog.ts` already resolves correctly for all 5 real categories. Live-verified: all 3 category circles now show their real bundled photos |
+| 79 | Q4/Q12 | blocker | **Systemic: the app's "no image available" placeholder was a generated `data:image/svg+xml` string handed to `<Image>`.** This renders fine in a web browser (all this environment could test with) but **React Native's native Image component cannot decode SVG at all** — on a real iOS/Android device every one of these "placeholders" was silently blank or showed the OS's broken-image icon. User-reported and confirmed via a real-device screenshot of the Orders screen ("Apple Sprout"/"Green Apple (Bag)" order items showing blank/broken boxes). Affected: `catalog.ts`'s `productImage()`/`categoryImage()` (feeding every product/category listing app-wide — ProductCard's 4 variants, Home's blend row + signature spotlight, PDP, Explore row — explore.tsx already had its own icon-based fallback and was unaffected), `(tabs)/orders.tsx`, `order/[id].tsx`, `cart.tsx`, `checkout/index.tsx`, `preorder/[slug].tsx`, `CategoryCard.tsx`, and the unused `SafeImage.tsx` | fixed — added a new `PlaceholderImage` component (`src/components/ui/PlaceholderImage.tsx`, real `View`+`Text`, not an `Image`) and switched every one of the above call sites to render it instead of a fake-URI `Image` whenever the real source is missing. `catalog.ts`'s `productImage()`/`categoryImage()` now return `null` instead of a broken SVG string (also fixes a latent side-bug: pre-order/checkout inserts were at risk of persisting a giant SVG data-URI string into `order_items.image`). Live-verified on web (Orders list now shows "C"/"A" initial-letter placeholders instead of blank boxes) — still needs a real device pass to fully confirm the native rendering, but the previous SVG approach is *guaranteed* broken on native by platform design, so this is a strict improvement regardless |
+| 80 | Q10/Q12 | minor | **Bottom tab bar's 4th tab was labeled "Rewards" with a gift icon but routed to the Subscriptions screen** — confirmed via git history (`7375fad`) this was a deliberate relabel from the original "Plans" that never touched the underlying screen/route. Nothing resembling a rewards/loyalty/points feature exists anywhere in the schema or code; user noticed the mismatch directly | fixed — reverted the tab's `label`/`title` back to "Plans" (the original, proven-to-fit pre-mislabel value) and the icon back to `calendar`. Live-verified in preview |
+| 81 | Q4 | n/a (user request, not a bug) | User asked to remove the "Notes (optional)" field and the "You won't be charged now..." info banner from the pre-order placement screen (`preorder/[slug].tsx`) | done — removed both, plus the now-dead `notes` state, `TextField` import, and 3 orphaned style keys. The `orders.notes` DB column itself is untouched (insert now just sends `null`) |
+| 82 | Q14 | info | Cold-start check: once the dev server itself is up, the app reliably paints Home fully (hero, categories, Best Sellers, Find Your Blend, signature product, featured products, Healthy Living, testimonials) within a few seconds of navigation, no console errors. The ~60-90s delay observed before that is Metro's own one-time dev-server warm-up (bundler cache rebuild), not app behavior — doesn't reflect production/EAS-build cold-start time | closed — no issue found at this level of testing |
+| 83 | Q14 | info | Repeated-navigation memory check: measured `performance.memory.usedJSHeapSize` across ~8 navigation cycles mixing full page reloads (Home→Product→Home, ×3) and genuine in-app client-side push/back (Home→Category→Home, via the accessibility tree, confirming expo-router's stack navigation itself works correctly). Heap stayed in a tight ~42-45MB band throughout with no upward trend, zero console errors | closed — no evidence of a leak at this level of testing. Precise, rapid scripted repeat-clicking proved unreliable in this tool (coordinates go stale after re-renders — not an app bug, a test-automation limitation), so this isn't as rigorous a stress test as a real device running the same flow for an extended session would be |
+| 77 | Q14 | major (tooling) | **`tsconfig.json`'s `exclude` list was missing `webapp`** (it excludes `node_modules`, `admin`, `website`, `supabase/functions` but not `webapp`). Since `include` is a broad `**/*.ts`/`**/*.tsx`, every `npx tsc --noEmit -p .` run was silently also type-checking `webapp/`'s ~270 files against the *mobile app's* `@/*` → `src/*` path alias instead of webapp's own alias — guaranteed to fail since webapp's `@/components/...` etc. don't exist under `src/`. This surfaced only now (not earlier this session) for reasons I couldn't pin down with certainty — possibly fs/cache state — but is reproducible on demand once triggered. **All the "tsc clean" claims logged earlier in this session (Q10/Q12 bug fixes) remain valid**: every error this produced was confined to `webapp/` paths, zero in `src/` | fixed — added `webapp` to `exclude`, matching the existing pattern for `admin`/`website`; re-verified clean (`exit 0`, zero output) with the fix in place |
+| 76 | Q14 | minor | Local dev environment's Node (`v22.12.0`) no longer satisfies the engine requirement several packages now declare after this session's updates (`react-native@0.85.3` and its Metro toolchain want `^22.13.0` or newer) — `npm install` now prints `EBADENGINE` warnings. Not a release blocker (EAS Build uses its own Node image, not this machine's), but worth bumping the local Node version for anyone developing against this repo going forward | wontfix (for now) — low priority, local dev-tooling hygiene only, not a release blocker |
+| 73 | Q14 | info | `_layout.tsx`'s cold-start effect has an unconditional `await new Promise(resolve => setTimeout(resolve, 500))` before hiding the splash screen. Reviewed, not flagged as waste — this matches Expo's own documented splash-screen pattern (a short buffer to avoid a flash-of-unstyled-content between splash and first paint), not a leftover debug artifact | closed — no issue |
+| 68 | Q13 | info | RLS spot-check via migrations (couldn't attempt a live cross-user read — no second test account): `addresses`, `orders`, `order_items`, and `partners` all correctly scope `select`/`insert`/`update` to `profile_id = auth.uid()` (or `is_admin()`) in `20260818190000_init_schema.sql` and `20260819120000_partners.sql`. Grepped all 36 migrations for `disable row level security`, `drop policy`, and stray `using (true)` policies on sensitive tables — none found, so no later migration silently widened access | closed — code-level verification; a live cross-user read attempt with 2 real accounts would still be the stronger proof, flagged for whenever test accounts are available |
+| 69 | Q13 | info | `partner-kyc` Storage bucket confirmed private (`public: false` in `20260831000000_partner_kyc.sql`) with RLS on `storage.objects` scoping insert/select/update/delete to the uploader's own uid folder or admin — no later migration touches this bucket | closed — no issue |
+| 70 | Q13 | info | `.env` is correctly gitignored (only `.env.example` is tracked); grepped all tracked `.ts`/`.tsx`/`.js`/`.json` files for `service_role` (only found as `process.env.SUPABASE_SERVICE_ROLE_KEY` lookups, never a literal key) and for JWT-shaped strings (only the `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `eas.json`, which decodes to `"role":"anon"` — safe and intended to be public, matching Supabase's design) | closed — no issue |
+| 64 | Q12 | minor | 5 text-input screens (`checkout/index.tsx`, `preorder/[slug].tsx`, `profile/addresses.tsx`, `subscription/custom.tsx`, `subscription/plan.tsx`) have no `KeyboardAvoidingView`, unlike `auth/login.tsx`, `partner/apply.tsx`, `partner/business-order.tsx`, and `profile/edit.tsx` which do. Likely mitigated in practice — all 5 wrap their fields in a `ScrollView` (iOS auto-scrolls a focused `TextInput` into view) and Expo's default Android manifest sets `windowSoftInputMode="adjustResize"` — but this environment can't load a real keyboard to confirm either claim | blocked on device — needs a real-device check (same Q14 native-only bucket), not blindly adding `KeyboardAvoidingView` everywhere without seeing whether it's actually needed |
+| 65 | Q12 | info | Keyboard *types* (the part checkable from code, not device behavior) are all correct: email fields use `email-address`, phone fields use `phone-pad`, numeric/OTP/ZIP fields use `number-pad`, free text uses the default — no mismatches found across login, checkout, addresses, partner apply/business-order | closed — no issue |
+| 66 | Q12 | info | Safe-area insets: every screen with a custom header imports `useSafeAreaInsets` and actually applies `insets.top`/`insets.bottom` — no screen found importing it unused or missing it entirely | closed — no issue |
+| 67 | Q12 | info | Haptic feedback consistency: the shared `Button` component (`src/components/ui/Button.tsx`) fires `Haptics.impactAsync` on every non-disabled/non-loading press internally, so screens using it for primary actions get consistent haptics "for free" without needing their own `Haptics` import — explains why some screens (e.g. `(tabs)/subscriptions.tsx`) have no direct `Haptics` usage and is not a gap | closed — no issue |
+| 63 | Q12 | info | Full icon-only-button accessibility audit not completed this session — 191 `TouchableOpacity`/`Pressable` usages exist across `src/app` + `src/components`; this pass fixed the ~25 most user-facing ones (navigation, cart, dismiss actions) by targeted grep, not an exhaustive one-by-one review of every remaining icon button | deferred — candidate for a dedicated follow-up pass if a full a11y audit is wanted before release, not a release blocker on its own |
+| 60 | Q11 | needs-decision | **All 4 Healthy Living mock articles** (`src/mock/index.ts`: cold-pressed juice, smoothies-vs-juices, morning rituals built around a breakfast drink, sustainable sipping) are written entirely around juice/smoothies — the same off-brand mismatch already flagged for onboarding (bugs #9/#10), but confirmed here across the *entire* Content area, not just two slides. The webapp, by contrast, has a real, large microgreens-focused blog (`webapp/app/blog/*`: "best-microgreens-and-their-benefits", "how-to-grow-microgreens-at-home-in-india", etc.) with no mobile equivalent — mobile's 4 mock articles don't correspond to any real webapp post | needs-decision (content owner, same bucket as #9/#10) — replace mobile's 4 mock articles with microgreens-appropriate content (ideally sourced from the real webapp blog posts), or explicitly accept as placeholder-only for v1 |
 
 Severity guide: **blocker** (crashes, data loss, can't complete a core flow) · **major** (feature
 broken or gives wrong data, no crash) · **minor** (cosmetic, edge case, non-blocking) ·
@@ -484,6 +517,18 @@ user data and payments-adjacent flows.
 
 ### Q15 — Deployment readiness checklist
 
+**Partial code review (2026-10-19):** `app.json` — version `1.0.0`, `bundleIdentifier`/`package`
+both `com.minigreens.app` (not a placeholder), all icon/splash/adaptive-icon asset files present,
+`runtimeVersion`/`updates` URL point at a real EAS project id. Only one Supabase project exists
+anywhere in this codebase (`xdjpwulpkuykxrxqalrh.supabase.co` — in `.env`, `eas.json`'s `preview`
+profile, and everywhere else referenced this whole sweep), so there's no separate
+dev-vs-production split to get wrong. **But:** `eas.json`'s `production` build profile has no `env`
+block for `EXPO_PUBLIC_SUPABASE_URL`/`ANON_KEY` (unlike `preview`, which hardcodes them) — a
+production EAS build needs these supplied via EAS's own project-level Environment Variables
+(dashboard-configured), which can't be confirmed from the repo. If they aren't set there, a
+production build would ship unable to reach Supabase at all. Flagged as bug 71 — needs EAS
+dashboard access to verify, not fixable from the repo alone.
+
 - [ ] `app.json` reviewed: version string, `bundleIdentifier`/`package` final and correct, icons/
   splash/adaptive-icon assets all present at the right resolutions, `runtimeVersion`/`updates` URL
   point at the real EAS project (already looks configured — just confirm it's the production one,
@@ -503,6 +548,174 @@ user data and payments-adjacent flows.
 ---
 
 ## 📝 SESSION LOG
+
+### 2026-10-20 — First real Android build (EAS), notification system confirmed wired
+
+User asked to build and test on a real device, starting with Android. Found and fixed two build-
+blocking issues along the way:
+- `.easignore` already excluded `admin/`, `website/`, `supabase/` etc. but was **missing `webapp/`**
+  — the same recurring gap as the `tsconfig.json` bug from the previous session (this monorepo's
+  sibling apps keep getting left out of exclusion lists). `webapp/` alone was 1.7GB; adding it to
+  `.easignore` brought the upload archive from 2.2GB (over EAS's 2.0GB limit) down to exactly 2.0GB.
+- Even after that fix, the local machine's `F:`/`C:` drives were too low on free space (0.33GB /
+  2.01GB) for EAS CLI to write its compressed archive to the default temp directory — hit `ENOSPC`.
+  Worked around it by pointing `TEMP`/`TMP` at a folder on the `D:` drive (23.74GB free) for just
+  this command, rather than deleting anything on the user's machine without asking.
+
+Build succeeded: **https://expo.dev/accounts/alfy1995s-team/projects/minigreens/builds/ef7d7ca2-bc59-4e92-ac3a-d2ea0f1f22c4**
+(Android `preview` profile — standalone installable APK, not a dev client).
+
+Also reviewed the server-side push pipeline before building, to know what to expect when testing:
+`notify_order_status_change()` (in `20260830150000_notifications_table.sql`) fires on every
+`orders` insert/status-change, writes an inbox row, and POSTs to `https://exp.host/--/api/v2/push/send`
+via `send_expo_push_notification()` if the signed-in profile has a `push_token` saved. The mobile
+client (`src/lib/notifications.ts`) registers via Expo's managed push service
+(`getExpoPushTokenAsync`) — no Firebase/`google-services.json` in the repo, relying on Expo's
+default Android push credentials. This worked in the sense that the build completed without an EAS
+credentials prompt for push, but whether an actual push notification arrives on-device is still
+unverified — that's the next thing to test once the APK is installed.
+
+**Still at exactly the 2.0GB archive limit even with `webapp/` excluded** — this app's own assets
+(several 2MB+ category/product PNGs already flagged earlier in the sweep) plus its own
+`node_modules` are substantial. Not a blocker today, but a future dependency bump could tip it back
+over the limit — worth a dedicated asset-size pass at some point (resize/compress the large PNGs).
+
+**Next session / next step for the user:** install the APK on an Android device via the link above,
+sign in, and confirm: (1) push token gets saved (`profiles.push_token` populated after login), (2)
+a real push notification arrives when an order's status changes, (3) general smoke-test of the
+native-only items this sweep could never verify from a web preview (bugs 13, 64, the image-
+placeholder fix, haptics, native pickers).
+
+### 2026-10-19 (continued) — Q14 finished, Bug Log cleanup, Q15 started
+
+Finished Q14 live: cold-start (fine once the dev server itself is warm — the slow part earlier was
+Metro's own one-time cache rebuild, not app behavior) and repeated-navigation memory (heap stayed in
+a tight ~42-45MB band across 8 navigation cycles, mixing full reloads and genuine in-app push/back
+via expo-router — no leak detected, console clean throughout).
+
+Then did a full Bug Log triage pass rather than leave a pile of stale "open" rows for Q15's "nothing
+left open" gate. Fixed 8 more real, small-to-medium bugs along the way:
+- Bug 14: discovered it was a stale duplicate of already-fixed bug 31 — just needed updating.
+- Bug 50: already fixed by the Q12 accessibility pass (bug 62) — same, just needed updating.
+- Bug 56: Settings' dead "Language" row now reads as informational (no chevron/press animation)
+  instead of looking like a button that silently does nothing.
+- Bug 15/55: `profile/edit.tsx` now re-syncs its fields via a `useEffect` keyed on `profile.id` if
+  the profile loads after the screen mounts (previously stuck blank).
+- Bug 25: Cart screen now shows Delivery Fee + Total, not just Subtotal, matching checkout/webapp.
+- Bug 30/34: Orders list and Subscriptions tab both now distinguish "couldn't load" from "genuinely
+  empty" instead of silently showing the empty-state copy on a network failure.
+- Bug 12: added a targeted friendly-copy mapper in `useAuthStore.ts` for Supabase's rate-limit
+  message; anything unrecognized still passes through raw rather than risk hiding a real error.
+- Bug 35: added `validateDeliveryDateInput()` (format + real-calendar-date + not-in-the-past) to both
+  subscription screens' free-text delivery-date field, replacing a raw-Postgres-error risk with a
+  friendly message. (A real date-picker UI would need a new native dependency — not added here.)
+
+The remaining "open" rows were reclassified into clear categories instead of bare `open`: `needs-
+decision` (bug 24, pricing integrity), `blocked on device` (bugs 13, 64), `blocked on credentials`
+(bugs 57, 59), `wontfix` (bug 76, local Node version), `deferred` (bug 63, full a11y audit). Ran a
+final `npx tsc --noEmit` — clean.
+
+Started Q15: `app.json` has a real bundle id/EAS project, all icon assets present; `eas.json`'s
+`production` profile is missing Supabase env vars (bug 71, needs EAS dashboard access to confirm);
+no credentials/keystores committed anywhere.
+
+**Next session:** Q15's remaining gates are all outside this file's reach — they need the user's
+decisions (bugs 23/24/54/58/60/71) and a real device pass (general image-placeholder confirmation,
+plus bugs 13/64 specifically) before this sweep can actually close.
+
+### 2026-10-19 — User-reported bugs: blank images, mislabeled tab, pre-order screen cleanup
+
+Mid-sweep (during Q14), the user showed two real-device screenshots reporting missing product/
+category images, which led to the most significant finding of this file so far: **every
+"placeholder" image anywhere in the app was a `data:image/svg+xml` string handed to `<Image>`,
+which React Native's native Image component cannot decode at all** — these were blank/broken on a
+real device the whole time, even though this environment's web-only preview made them look fine
+all session. See bugs 78–81 for the full writeup. Fixed with a new `PlaceholderImage` component
+(real View+Text, not a fake Image source) threaded through every affected screen, removed a stale
+duplicate category-image list on Home that was actively overriding already-correct data, fixed a
+mislabeled bottom tab ("Rewards" → "Plans", pointing at the Subscriptions screen the whole time),
+and removed the Notes field + info banner from the pre-order screen per the user's request.
+`npx tsc --noEmit` clean throughout; spot-verified live in the web preview (can't fully confirm
+native rendering from here, but the old approach was guaranteed broken on native, so this is a
+strict improvement regardless of device).
+
+**Next session:** get a real device/simulator confirmation that placeholders now render correctly,
+then resume Q14 (cold-start timing, memory-growth check) and Q15 (finish the deployment checklist).
+
+### 2026-10-13 — Q10 (Profile & Account) started
+
+Reviewed every Profile & Account screen (`(tabs)/profile.tsx`, `profile/edit.tsx`,
+`profile/addresses.tsx`, `profile/settings.tsx`, `profile/about.tsx`, `profile/contact.tsx`,
+`profile/faq.tsx`, `profile/privacy.tsx`, `profile/terms.tsx`, `profile/returns.tsx`,
+`profile/shipping-policy.tsx`) against the webapp for parity and against app-store requirements.
+
+**Found and fixed 3 real bugs:**
+- Bug 51 (major): editing any saved address always un-defaulted it (a stale `is_default:
+  addresses.length === 0` check that's never true on an edit). Fixed to preserve the address's
+  existing default status on edit; only a fresh add still uses the length check.
+- Bug 52 (minor): address save/delete ignored Supabase `error` results, same silent-failure class
+  already fixed in Q6's subscription screen. Fixed with the same `Alert`-on-error pattern.
+- Bug 53 (minor): Contact Us's Instagram link used a different handle than the webapp footer's
+  real link. Fixed to match.
+
+**Found one real blocker needing the user's decision (bug 54):** there is no in-app account
+deletion anywhere in `src/` — a hard requirement for both Apple and Google app-store review once
+an app supports account creation, which this one does (email OTP). The Privacy Policy screen
+already promises in-app deletion rights that don't actually exist yet. This should be resolved
+before Q15 (deployment readiness) is signed off.
+
+Re-confirmed two already-tracked items still present, not new: bug #15 (edit-profile fields can go
+stale if `profile` loads after mount) and the free-delivery ₹499 promise (bug #23, referenced again
+in FAQ copy).
+
+**Could not live-verify writes this session** — the fresh Expo web preview has no persisted auth
+session (the 2026-10-07 session's real test-account session lived only in that session's own
+browser storage, not something this session inherits). Verified the address-edit fix by code
+review plus a clean `npx tsc --noEmit` run instead; flagged as bug 57 so a future session with a
+real session (or real OTP credentials) re-verifies live.
+
+**Next session:** finish Q10 by live-verifying bugs 51/52 with a real account, then get the user's
+decision on bug 54 (account deletion) before moving to Q11 (Content).
+
+### 2026-10-13 (continued) — Q10 wrapped, Q11 done, Q12 started
+
+User's instruction: hold bugs 54 (account deletion) and 58 (settings toggles) as decision items,
+keep moving through the sweep rather than stopping on them.
+
+**Q10 closed out:** reviewed the full checklist against the code — sign-out correctly clears
+session/profile/partner-status, avatar placeholder and all static legal pages check out. Two items
+remain genuinely blocked on credentials, not further reviewable from here: the admin-Customers
+cross-check (bug 59) and live write-verification of bugs 51/52 (bug 57).
+
+**Q11 (Content) reviewed and effectively closed:** article list/detail navigation, "View all" link,
+and Women Who Grow's 3 entry points all code-reviewed and correct — no orphaned links, article-not-
+found handled gracefully. One real finding: all 4 mock Healthy Living articles are juice/smoothie
+content, the same brand mismatch as onboarding (bugs #9/#10) but confirmed across the entire
+Content area — logged as bug 60, held as a decision item in the same bucket.
+
+**Q12 (cross-cutting) started:**
+- console.log/warn sweep: clean, nothing found.
+- Removed 6 confirmed-dead `src/mock/index.ts` exports (verified via grep with zero importers
+  first) plus their now-unused helper function and type imports (bug 61).
+- Currency formatting (`toFixed(0)` vs `toFixed(2)`) investigated — found the webapp uses the exact
+  same split (catalog/browse screens: 0 decimals; cart/checkout/orders: 2 decimals), so this is a
+  deliberate, cross-platform-consistent convention, not a bug. No action needed.
+- Accessibility pass: added `accessibilityLabel` to 25 icon-only buttons — all 18 hand-rolled header
+  back-buttons across the app (none used the shared `Screen` component's already-correct back
+  button), the cart screen's trash/stepper buttons (closes bug #50), Home header's bell/cart icons,
+  and 6 dismiss/close/clear buttons (bug 62). Caught my own mistake mid-edit: first draft referenced
+  a nonexistent `item.productName` field on the cart item type (it's actually `item.name`) — fixed
+  before it shipped. Live-verified in the preview: cart's back button now reports "Go back" in the
+  accessibility tree, and the screen still renders correctly.
+- `npx tsc --noEmit` run 3 times across this batch of edits (after Q10's address fix, after the mock
+  cleanup, after the accessibility batch) — clean every time.
+- Not yet done: safe-area spot-check, keyboard-handling pass, haptics-consistency pass, and a full
+  191-touchable icon-button inventory (this session's pass covered the ~25 highest-traffic ones by
+  targeted search, not an exhaustive review — tracked as bug 63 for a possible dedicated follow-up).
+
+**Next session:** finish Q12 (safe-area, keyboard, haptics, remaining icon buttons per bug 63),
+then Q13 (security spot-check) and Q14 (performance). Decisions still pending from the user: bugs
+23, 24, 54, 58, 60.
 
 ### 2026-10-07 — Q2 complete (Home), fully live-verified with the real account
 

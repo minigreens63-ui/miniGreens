@@ -166,6 +166,7 @@ export default function AddressesScreen() {
       return;
     }
     setSaving(true);
+    const editingAddress = editingId ? addresses.find((a) => a.id === editingId) : undefined;
     const payload = {
       profile_id: profile.id,
       label: form.label,
@@ -176,15 +177,19 @@ export default function AddressesScreen() {
       city: form.city,
       state: form.state,
       zip_code: form.zipCode,
-      is_default: addresses.length === 0,
+      // On edit, keep the address's existing default status — it's never "the
+      // list is empty" at this point since we're editing a row that's in it.
+      is_default: editingId ? (editingAddress?.is_default ?? false) : addresses.length === 0,
     };
 
-    if (editingId) {
-      await supabase.from('addresses').update(payload).eq('id', editingId);
-    } else {
-      await supabase.from('addresses').insert(payload);
-    }
+    const { error } = editingId
+      ? await supabase.from('addresses').update(payload).eq('id', editingId)
+      : await supabase.from('addresses').insert(payload);
     setSaving(false);
+    if (error) {
+      Alert.alert('Error', 'Could not save address. Please try again.');
+      return;
+    }
     setModalVisible(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     load();
@@ -197,7 +202,11 @@ export default function AddressesScreen() {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          await supabase.from('addresses').delete().eq('id', address.id);
+          const { error } = await supabase.from('addresses').delete().eq('id', address.id);
+          if (error) {
+            Alert.alert('Error', 'Could not delete address. Please try again.');
+            return;
+          }
           if (address.is_default && profile) {
             // Deleting the default address leaves no default — promote the most
             // recently added remaining one so checkout always has one to fall back on.
@@ -254,6 +263,7 @@ export default function AddressesScreen() {
             router.back();
           }}
           style={styles.headerButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>

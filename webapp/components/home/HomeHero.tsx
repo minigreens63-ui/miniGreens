@@ -11,9 +11,9 @@ const BADGES = [
   { Icon: Truck, label: ["Freshly Cut &", "Delivered"] },
 ];
 
-const HERO_SRC = "/images/hero/hero-flatlay-cream.webp";
+const HERO_SRC = "/images/hero/hero-flatlay-green-vitality.webp";
 const HERO_MOBILE_SRC = "/images/hero/hero-tube-mobile.webp";
-const HERO_ALT = "Mini Greens Green Detox microgreen tea tube with a glass of tea and fresh microgreens";
+const HERO_ALT = "Mini Greens Green Detox microgreen tea tube with a glass of brewed tea";
 
 export function HomeHero() {
   return (
@@ -57,8 +57,8 @@ export function HomeHero() {
             You, Naturally.
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-(--color-forest)/75 md:mt-5">
-            Fresh microgreens, microgreen tea bags and drinks, grown clean and delivered across
-            Bengaluru. Real greens, one cup and one meal at a time.
+            Microgreen tea bags, grown clean and delivered across Bengaluru. Real greens, one
+            cup at a time.
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3 md:mt-8">

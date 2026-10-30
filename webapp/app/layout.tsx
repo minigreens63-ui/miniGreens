@@ -35,7 +35,7 @@ const inter = Inter({
 
 const DEFAULT_TITLE = `Mini Greens Company | ${BRAND_CLAIM_SHORT}`;
 const DEFAULT_DESCRIPTION =
-  `${BRAND_CLAIM_SHORT}. Handpicked microgreens grown with care, delivered fresh to your doorstep.`;
+  `${BRAND_CLAIM_SHORT}. Handpicked microgreen tea blends grown with care, delivered fresh to your doorstep.`;
 const DEFAULT_OG_IMAGE = BRAND_OG_IMAGE;
 
 export const viewport: Viewport = { themeColor: "#ffffff" };

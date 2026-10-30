@@ -7,7 +7,8 @@ import Animated, {
   FadeInUp,
   ZoomIn,
 } from 'react-native-reanimated';
-import { View, ScrollView, StyleSheet, Image, Pressable, Dimensions } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,6 +28,7 @@ import { SectionHeader } from '../../components/layout/SectionHeader';
 import { BottomActionBar } from '../../components/layout/BottomActionBar';
 import { useProduct, useProducts } from '../../services/catalog';
 import { resolveImageSource } from '../../utils/placeholders';
+import { PlaceholderImage } from '../../components/ui/PlaceholderImage';
 import { useCartStore } from '../../store/useCartStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -158,7 +160,11 @@ export default function ProductDetailScreen() {
       {/* Hero image: a rounded card, like Home's hero */}
       <Animated.View entering={FadeInUp.springify().damping(34).stiffness(180).mass(1)}>
         <View style={styles.imageContainer}>
-          <Image source={resolveImageSource(product.images[selectedImage])} style={styles.mainImage} />
+          {product.images[selectedImage] ? (
+            <Image source={resolveImageSource(product.images[selectedImage])} style={styles.mainImage} />
+          ) : (
+            <PlaceholderImage label={product.name} style={styles.mainImage} />
+          )}
           <LinearGradient
             colors={['transparent', 'rgba(29,43,32,0.28)']}
             style={StyleSheet.absoluteFill}

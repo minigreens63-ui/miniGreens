@@ -17,6 +17,7 @@ import { Screen } from '../../components/layout/Screen';
 import { useProducts, useCategories } from '../../services/catalog';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
+import { validateDeliveryDateInput } from '../../utils/date';
 import type { Database } from '../../types/database';
 
 type Address = Database['public']['Tables']['addresses']['Row'];
@@ -147,8 +148,9 @@ export default function PlanSubscriptionScreen() {
       setError('Please select a delivery address.');
       return;
     }
-    if (!deliveryDate.trim()) {
-      setError('Please enter a first delivery date.');
+    const dateError = validateDeliveryDateInput(deliveryDate);
+    if (dateError) {
+      setError(dateError);
       return;
     }
     if (!termsAccepted) {
@@ -233,6 +235,7 @@ export default function PlanSubscriptionScreen() {
             router.back();
           }}
           style={styles.headerButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>

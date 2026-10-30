@@ -226,6 +226,11 @@ export default function OrdersClient({ orders }: { orders: OrderRow[] }) {
                         {o.order_type}
                       </span>
                     )}
+                    {o.is_gift && (
+                      <span className="ml-2 inline-flex items-center rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-pink-700">
+                        🎁 Gift
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-800">
                     {customerLabel(o)}
@@ -368,6 +373,28 @@ export default function OrdersClient({ orders }: { orders: OrderRow[] }) {
                     {selectedOrder.business_address && (
                       <p className="text-slate-500">{selectedOrder.business_address}</p>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* Gift details */}
+              {selectedOrder.is_gift && (
+                <div>
+                  <p className="text-xs font-semibold text-pink-600 uppercase tracking-wider mb-2">
+                    🎁 Gift Order{selectedOrder.gift_occasion ? ` — ${selectedOrder.gift_occasion}` : ""}
+                  </p>
+                  <div className="rounded-xl bg-pink-50 border border-pink-100 px-4 py-3 text-sm text-slate-700 space-y-2">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase text-slate-400">Recipient</p>
+                      <p className="font-medium">{selectedOrder.gift_recipient_name ?? "—"}</p>
+                      <p className="text-slate-500">{selectedOrder.gift_recipient_phone ?? "—"}</p>
+                      <p className="text-slate-500">{selectedOrder.gift_recipient_address ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase text-slate-400">Sender</p>
+                      <p className="font-medium">{selectedOrder.gift_sender_name ?? customerLabel(selectedOrder)}</p>
+                      <p className="text-slate-500">{selectedOrder.gift_sender_phone ?? "—"}</p>
+                    </div>
                   </div>
                 </div>
               )}

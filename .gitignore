@@ -49,5 +49,5 @@ cleanup_verify.mjs
 /ios
 /android
 
-# large unused source-image dump (app bundles src/assets/* instead)
-/assets/mini
+# raw/unused source material (gif frames, mockup dumps) — not part of the app bundle
+/design-source

@@ -3,6 +3,10 @@
 // hero copy below is keyed by slug; categories without an entry fall back to a heading built
 // from the category's own name and description (see `categoryCopy`).
 
+// For now the webapp only showcases tea blends — raw microgreens, juices and anything else
+// stay hidden here even if active in the admin panel. Add a slug back to re-enable it.
+export const VISIBLE_CATEGORY_SLUGS = ["tea-blends"];
+
 // Per-category shop hero copy. Falls back to the "everything" heading.
 export const SHOP_COPY: Record<
   string,
@@ -13,7 +17,7 @@ export const SHOP_COPY: Record<
     title: "Real Greens.",
     accent: "By the Cup.",
     blurb:
-      "Functional microgreen tea blends, brewed fresh and naturally caffeine-free. 15 sachets a box.",
+      "Functional microgreen tea blends, brewed fresh and naturally caffeine-free. 10 sachets a box.",
   },
   microgreens: {
     eyebrow: "Microgreens",
@@ -31,11 +35,11 @@ export const SHOP_COPY: Record<
 };
 
 export const SHOP_COPY_DEFAULT = {
-  eyebrow: "Shop",
-  title: "Everything We Grow,",
-  accent: "In One Place",
+  eyebrow: "Microgreen Teas",
+  title: "Real Greens.",
+  accent: "By the Cup.",
   blurb:
-    "Tea blends, microgreens and cold-pressed juices, all farm-fresh from Mini Greens.",
+    "Functional microgreen tea blends, brewed fresh and naturally caffeine-free. 10 sachets a box.",
 };
 
 /** Hero copy for a category: the curated entry if there is one, else built from the DB row. */

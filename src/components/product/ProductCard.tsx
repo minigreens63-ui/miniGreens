@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { View, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -13,6 +14,7 @@ import { colors, spacing, borderRadius } from '../../theme';
 import { Typography } from '../ui/Typography';
 import { Product } from '../../types';
 import { resolveImageSource } from '../../utils/placeholders';
+import { PlaceholderImage } from '../ui/PlaceholderImage';
 import { useCartStore } from '../../store/useCartStore';
 
 interface ProductCardProps {
@@ -105,7 +107,11 @@ export function ProductCard({ product, onPress, variant = 'default', index = 0, 
           onPressIn={onPressIn}
           onPressOut={onPressOut}
         >
-          <Image source={resolveImageSource(product.images[0])} style={styles.horizontalImage} resizeMode="cover" />
+          {product.images[0] ? (
+            <Image source={resolveImageSource(product.images[0])} style={styles.horizontalImage} contentFit="cover" cachePolicy="memory-disk" />
+          ) : (
+            <PlaceholderImage label={product.name} style={styles.horizontalImage} />
+          )}
           <View style={styles.horizontalContent}>
             <Typography variant="caption" color={colors.primary} weight="medium" uppercase>
               {product.unit}
@@ -147,11 +153,15 @@ export function ProductCard({ product, onPress, variant = 'default', index = 0, 
       >
         <Pressable onPress={handlePress} onPressIn={onPressIn} onPressOut={onPressOut} style={styles.seasonalInner}>
           {/* Full-bleed image that fades out from ~50% down into the card */}
-          <Image
-            source={resolveImageSource(product.images[0])}
-            style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
-            resizeMode="cover"
-          />
+          {product.images[0] ? (
+            <Image
+              source={resolveImageSource(product.images[0])}
+              style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
+              contentFit="cover" cachePolicy="memory-disk"
+            />
+          ) : (
+            <PlaceholderImage label={product.name} style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]} />
+          )}
           <LinearGradient
             colors={['rgba(20,20,20,0)', 'rgba(20,20,20,0.6)', 'rgba(20,20,20,1)']}
             locations={[0.35, 0.58, 0.88]}
@@ -219,7 +229,11 @@ export function ProductCard({ product, onPress, variant = 'default', index = 0, 
         style={[styles.compactCard, animStyle, style]}
       >
         <Pressable onPress={handlePress} onPressIn={onPressIn} onPressOut={onPressOut} style={{ flex: 1 }}>
-          <Image source={resolveImageSource(product.images[0])} style={styles.compactImage} />
+          {product.images[0] ? (
+            <Image source={resolveImageSource(product.images[0])} style={styles.compactImage} />
+          ) : (
+            <PlaceholderImage label={product.name} style={styles.compactImage} />
+          )}
           <View style={styles.compactContent}>
             <Typography variant="bodySmall" weight="semibold" numberOfLines={1}>
               {product.name}
@@ -246,11 +260,15 @@ export function ProductCard({ product, onPress, variant = 'default', index = 0, 
     >
       <Pressable onPress={handlePress} onPressIn={onPressIn} onPressOut={onPressOut} style={styles.cardInner}>
         <View style={styles.imageArea}>
-          <Image
-            source={resolveImageSource(product.images[0])}
-            style={styles.image}
-            resizeMode="cover"
-          />
+          {product.images[0] ? (
+            <Image
+              source={resolveImageSource(product.images[0])}
+              style={styles.image}
+              contentFit="cover" cachePolicy="memory-disk"
+            />
+          ) : (
+            <PlaceholderImage label={product.name} style={styles.image} />
+          )}
           {/* Melt the photo into the card surface — no hard rectangle seam. */}
           <LinearGradient
             colors={['rgba(20,26,21,0)', 'rgba(20,26,21,0)', colors.surface]}

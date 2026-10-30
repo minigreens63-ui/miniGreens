@@ -31,8 +31,20 @@ Deno.serve(async (req) => {
     .filter(Boolean)
     .join(", ");
 
+  const giftBanner = order.is_gift
+    ? `<p style="background:#FFF4CC;border:1px solid #E8C84A;border-radius:8px;padding:10px 14px;">
+         🎁 <b>GIFT ORDER</b>${order.gift_occasion ? ` — ${esc(order.gift_occasion)}` : ""}
+       </p>
+       <p><b>Recipient:</b> ${esc(order.gift_recipient_name ?? "—")}<br>
+          <b>Recipient phone:</b> ${esc(order.gift_recipient_phone ?? "—")}<br>
+          <b>Recipient address:</b> ${esc(order.gift_recipient_address || "—")}</p>
+       <p><b>Sender:</b> ${esc(order.gift_sender_name ?? order.customer_name)}<br>
+          <b>Sender phone:</b> ${esc(order.gift_sender_phone ?? order.customer_phone ?? "—")}</p>`
+    : "";
+
   const html = `
-    <h2>New order placed: ${esc(order.order_number)}</h2>
+    <h2>${order.is_gift ? "🎁 New gift order placed: " : "New order placed: "}${esc(order.order_number)}</h2>
+    ${giftBanner}
     <p><b>Customer:</b> ${esc(order.customer_name)}<br>
        <b>Phone:</b> ${esc(order.customer_phone ?? "—")}</p>
     <p><b>Total:</b> ${money(order.total)} (subtotal ${money(order.subtotal)} + delivery ${money(order.delivery_fee)})<br>
@@ -51,7 +63,7 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       from: Deno.env.get("ORDER_NOTIFY_FROM") ?? "MiniGreens Orders <onboarding@resend.dev>",
       to: [Deno.env.get("ORDER_NOTIFY_TO") ?? "mgc.bangalore@gmail.com"],
-      subject: `New order ${order.order_number} — ${money(order.total)}`,
+      subject: `${order.is_gift ? "🎁 Gift order " : "New order "}${order.order_number} — ${money(order.total)}`,
       html,
     }),
   });

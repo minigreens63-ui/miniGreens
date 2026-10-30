@@ -25,22 +25,22 @@ const contactMethods = [
   {
     icon: 'call-outline' as const,
     label: 'Call Us',
-    value: '+91 98765 43210',
-    action: () => Linking.openURL('tel:+919876543210'),
+    value: '+91 99803 44273',
+    action: () => Linking.openURL('tel:+919980344273'),
     hint: 'Mon–Sat, 9am–6pm IST',
   },
   {
     icon: 'chatbubble-ellipses-outline' as const,
     label: 'WhatsApp',
-    value: '+91 98765 43210',
-    action: () => Linking.openURL('https://wa.me/919876543210'),
+    value: '+91 99803 44273',
+    action: () => Linking.openURL('https://wa.me/919980344273'),
     hint: 'Fastest response',
   },
   {
     icon: 'logo-instagram' as const,
     label: 'Instagram',
-    value: '@minigreens.in',
-    action: () => Linking.openURL('https://instagram.com/minigreens.in'),
+    value: '@minigreenscompany',
+    action: () => Linking.openURL('https://www.instagram.com/minigreenscompany'),
     hint: 'Follow for fresh updates',
   },
 ];
@@ -103,6 +103,7 @@ export default function ContactScreen() {
             router.back();
           }}
           style={styles.headerButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>

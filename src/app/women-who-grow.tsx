@@ -58,6 +58,7 @@ export default function WomenWhoGrowScreen() {
             router.back();
           }}
           style={styles.headerButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -158,13 +159,13 @@ export default function WomenWhoGrowScreen() {
           </Typography>
           <Typography variant="bodySmall" color={colors.textSecondary} style={{ marginTop: spacing.sm, textAlign: 'center', lineHeight: 20 }}>
             Sumam is how we help create new women entrepreneurs, from growing at home to selling
-            with us. Start with a partner application and our team will get in touch.
+            with us. Reach out and our team will get in touch.
           </Typography>
           <Button
-            title="Apply to Become a Partner"
+            title="Get in Touch"
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/partner/apply?type=women' as any);
+              router.push('/profile/contact' as any);
             }}
             style={{ marginTop: spacing.lg, alignSelf: 'stretch' }}
           />

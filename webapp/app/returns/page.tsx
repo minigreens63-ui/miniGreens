@@ -4,7 +4,7 @@ import { PageShell, Panel } from "@/components/PageShell";
 export const metadata: Metadata = {
   title: "Returns & Refunds | Mini Greens Company",
   description:
-    "Our returns and refund policy for perishable microgreens, juices and tea blends.",
+    "Our returns and refund policy for our fresh tea blends.",
   alternates: { canonical: "/returns" },
 };
 

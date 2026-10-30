@@ -1,9 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Image, Pressable } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,48 +19,34 @@ import { PressableScale } from '../../components/ui/PressableScale';
 import { Screen } from '../../components/layout/Screen';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
-import { getAvatarPlaceholder } from '../../utils/placeholders';
+import { PlaceholderImage } from '../../components/ui/PlaceholderImage';
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
+  subtitle: string;
   route: string;
 }
 
-function getMenuSections(
-  role: string | undefined,
-  partnerStatus: string | null,
-): { title: string; items: MenuItem[] }[] {
-  // One partner row per profile (unique profile_id), so pending/rejected applicants
-  // can't re-apply — send them to their application status instead.
-  let partnerItem: MenuItem = { icon: 'briefcase-outline', label: 'Become an MGC Partner', route: '/partner/apply' };
-  if (role === 'partner' || partnerStatus === 'approved') {
-    partnerItem = { icon: 'briefcase-outline', label: 'Partner Dashboard', route: '/partner/dashboard' };
-  } else if (partnerStatus === 'pending') {
-    partnerItem = { icon: 'time-outline', label: 'Partner Application Under Review', route: '/partner/submitted' };
-  } else if (partnerStatus === 'rejected') {
-    partnerItem = { icon: 'briefcase-outline', label: 'Partner Application Status', route: '/partner/dashboard' };
-  }
-
+function getMenuSections(): { title: string; items: MenuItem[] }[] {
   return [
     {
       title: 'Account',
       items: [
-        { icon: 'person-outline', label: 'Edit Profile', route: '/profile/edit' },
-        { icon: 'location-outline', label: 'Saved Addresses', route: '/profile/addresses' },
-        { icon: 'pricetag-outline', label: 'My Offers', route: '/offers' },
-        { icon: 'calendar-outline', label: 'My Subscription', route: '/subscription/manage' },
-        partnerItem,
+        { icon: 'person-outline', label: 'Edit Profile', subtitle: 'Update your personal details', route: '/profile/edit' },
+        { icon: 'location-outline', label: 'Saved Addresses', subtitle: 'Manage your delivery addresses', route: '/profile/addresses' },
+        { icon: 'pricetag-outline', label: 'My Offers', subtitle: 'View available offers and rewards', route: '/offers' },
+        { icon: 'calendar-outline', label: 'My Subscription', subtitle: 'Manage your subscription plans', route: '/subscription/manage' },
       ],
     },
     {
       title: 'Settings',
       items: [
-        { icon: 'settings-outline', label: 'Settings', route: '/profile/settings' },
-        { icon: 'information-circle-outline', label: 'About', route: '/profile/about' },
-        { icon: 'people-outline', label: 'Women Who Grow', route: '/women-who-grow' },
-        { icon: 'call-outline', label: 'Contact Us', route: '/profile/contact' },
-        { icon: 'help-circle-outline', label: 'FAQ', route: '/profile/faq' },
+        { icon: 'settings-outline', label: 'Settings', subtitle: 'Notifications, privacy and more', route: '/profile/settings' },
+        { icon: 'information-circle-outline', label: 'About', subtitle: 'App version, terms and policies', route: '/profile/about' },
+        { icon: 'people-outline', label: 'Women Who Grow', subtitle: 'Our community and initiatives', route: '/women-who-grow' },
+        { icon: 'call-outline', label: 'Contact Us', subtitle: 'Get in touch with our team', route: '/profile/contact' },
+        { icon: 'help-circle-outline', label: 'FAQ', subtitle: 'Find answers to common questions', route: '/profile/faq' },
       ],
     },
   ];
@@ -73,13 +58,17 @@ function MenuRow({
   item,
   isLast,
   delay,
+  tone,
 }: {
   item: MenuItem;
   isLast: boolean;
   delay: number;
+  tone: 'green' | 'peach';
 }) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const iconBg = tone === 'green' ? colors.accentSurface : colors.warningLight;
+  const iconColor = tone === 'green' ? colors.primary : colors.warning;
 
   return (
     <Animated.View
@@ -96,12 +85,17 @@ function MenuRow({
         onPressOut={() => { scale.value = withSpring(1, { damping: 31, stiffness: 220, mass: 1 }); }}
       >
         <View style={styles.menuItemLeft}>
-          <View style={styles.menuIconBg}>
-            <Ionicons name={item.icon} size={20} color={colors.primary} />
+          <View style={[styles.menuIconBg, { backgroundColor: iconBg }]}>
+            <Ionicons name={item.icon} size={20} color={iconColor} />
           </View>
-          <Typography variant="body" color={colors.text} style={styles.menuItemLabel}>
-            {item.label}
-          </Typography>
+          <View style={styles.menuItemText}>
+            <Typography variant="body" weight="semibold" color={colors.text}>
+              {item.label}
+            </Typography>
+            <Typography variant="caption" color={colors.textTertiary} style={styles.menuItemSubtitle}>
+              {item.subtitle}
+            </Typography>
+          </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
       </Pressable>
@@ -115,16 +109,13 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const authProfile = useAuthStore((s) => s.profile);
   const session = useAuthStore((s) => s.session);
-  const partnerStatus = useAuthStore((s) => s.partnerStatus);
   const signOut = useAuthStore((s) => s.signOut);
-  const isPartner = authProfile?.role === 'partner' || partnerStatus === 'approved';
+  const isPartner = authProfile?.role === 'partner';
   let itemDelay = 280;
 
   const displayName = authProfile?.full_name || 'MiniGreens member';
   const displayEmail = authProfile?.email || session?.user.email || '';
-  // BUG-15: fall back to a generated initial avatar (the mock URL can 404).
-  const displayAvatar = authProfile?.avatar || getAvatarPlaceholder(displayName);
-  const menuSections = getMenuSections(authProfile?.role, partnerStatus);
+  const menuSections = getMenuSections();
 
   const [orderCount, setOrderCount] = useState<number | null>(null);
   const [addressCount, setAddressCount] = useState<number | null>(null);
@@ -175,9 +166,25 @@ export default function ProfileScreen() {
           entering={FadeInUp.delay(40).springify().damping(31).mass(1).stiffness(100)}
           style={styles.profileHeader}
         >
+          <View pointerEvents="none" style={styles.headerFlourishTop}>
+            <Ionicons name="leaf" size={110} color={colors.green[200]} style={styles.flourishLeafBack} />
+            <Ionicons name="leaf" size={76} color={colors.primaryLight} style={styles.flourishLeafFront} />
+          </View>
+          <View pointerEvents="none" style={styles.headerFlourishBottom}>
+            <Ionicons name="leaf" size={90} color={colors.green[100]} />
+          </View>
+
+          <PressableScale
+            style={styles.settingsBtn}
+            onPress={() => router.push('/profile/settings')}
+            accessibilityLabel="Settings"
+          >
+            <Ionicons name="settings-outline" size={20} color={colors.text} />
+          </PressableScale>
+
           <Animated.View entering={ZoomIn.delay(80).springify().damping(19).mass(1).stiffness(100)}>
             <View style={styles.avatarRing}>
-              <Image source={{ uri: displayAvatar }} style={styles.avatar} />
+              <PlaceholderImage label={displayName} style={styles.avatar} round />
             </View>
           </Animated.View>
           <Animated.View entering={FadeInUp.delay(180).springify().damping(31).mass(1).stiffness(100)} style={styles.profileInfo}>
@@ -189,7 +196,7 @@ export default function ProfileScreen() {
             </Typography>
             {isPartner && (
               <View style={styles.partnerBadge}>
-                <Ionicons name="ribbon-outline" size={13} color={colors.primaryDark} />
+                <Ionicons name="leaf" size={13} color={colors.primaryDark} />
                 <Typography variant="caption" color={colors.primaryDark} weight="bold">
                   MGC Partner
                 </Typography>
@@ -204,18 +211,26 @@ export default function ProfileScreen() {
           style={styles.statsRow}
         >
           {[
-            { label: 'Orders', value: orderCount === null ? '–' : String(orderCount) },
-            { label: 'Addresses', value: addressCount === null ? '–' : String(addressCount) },
+            { label: 'Orders', value: orderCount === null ? '–' : String(orderCount), icon: 'bag-handle-outline' as const },
+            { label: 'Saved Addresses', value: addressCount === null ? '–' : String(addressCount), icon: 'location-outline' as const },
             // BUG-15: 'Reviews' tile removed — no reviews feature exists (was hardcoded 0).
-          ].map((stat, index) => (
-            <View key={index} style={styles.statItem}>
-              <Typography variant="h4" color={colors.primaryDark} weight="bold">
-                {stat.value}
-              </Typography>
-              <Typography variant="caption" color={colors.textSecondary}>
-                {stat.label}
-              </Typography>
-            </View>
+          ].map((stat, index, arr) => (
+            <React.Fragment key={index}>
+              <View style={styles.statItem}>
+                <View style={styles.statIconBg}>
+                  <Ionicons name={stat.icon} size={20} color={colors.primary} />
+                </View>
+                <View>
+                  <Typography variant="h4" color={colors.text} weight="bold">
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="caption" color={colors.textSecondary}>
+                    {stat.label}
+                  </Typography>
+                </View>
+              </View>
+              {index < arr.length - 1 && <View style={styles.statDivider} />}
+            </React.Fragment>
           ))}
         </Animated.View>
 
@@ -245,6 +260,7 @@ export default function ProfileScreen() {
                       item={item}
                       isLast={itemIndex === section.items.length - 1}
                       delay={d}
+                      tone={itemIndex % 2 === 0 ? 'green' : 'peach'}
                     />
                   );
                 })}
@@ -255,9 +271,10 @@ export default function ProfileScreen() {
         })}
 
         {/* Logout */}
-        <Animated.View entering={FadeInUp.delay(640).springify().damping(31).mass(1).stiffness(100)}>
+        <Animated.View entering={FadeInUp.delay(640).springify().damping(31).mass(1).stiffness(100)} style={styles.logoutWrap}>
           <PressableScale style={styles.logoutButton} onPress={handleSignOut} haptic={false} accessibilityLabel="Sign out">
-            <Typography variant="body" color={colors.error} weight="semibold">
+            <Ionicons name="log-out-outline" size={18} color={colors.error} />
+            <Typography variant="body" color={colors.error} weight="semibold" style={styles.logoutLabel}>
               Sign Out
             </Typography>
           </PressableScale>
@@ -276,17 +293,60 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['8xl'],
   },
   profileHeader: {
+    position: 'relative',
+    overflow: 'hidden',
     alignItems: 'center',
     paddingVertical: spacing['2xl'],
     paddingHorizontal: spacing.lg,
     gap: spacing.md,
+    backgroundColor: colors.accentSurface,
+  },
+  headerFlourishTop: {
+    position: 'absolute',
+    top: -10,
+    right: -16,
+    width: 140,
+    height: 140,
+  },
+  flourishLeafBack: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    opacity: 0.45,
+    transform: [{ rotate: '20deg' }],
+  },
+  flourishLeafFront: {
+    position: 'absolute',
+    top: 46,
+    right: 46,
+    opacity: 0.5,
+    transform: [{ rotate: '-14deg' }],
+  },
+  headerFlourishBottom: {
+    position: 'absolute',
+    bottom: -24,
+    left: -20,
+    opacity: 0.5,
+    transform: [{ rotate: '-28deg' }],
+  },
+  settingsBtn: {
+    position: 'absolute',
+    top: spacing.lg,
+    right: spacing.lg,
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.pill,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
   },
   avatarRing: {
     width: 100,
     height: 100,
     borderRadius: 50,
     borderWidth: 3,
-    borderColor: colors.primaryBg,
+    borderColor: colors.surface,
     padding: 3,
     backgroundColor: colors.surface,
     ...shadows.md,
@@ -295,7 +355,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 47,
-    backgroundColor: colors.border,
   },
   partnerBadge: {
     flexDirection: 'row',
@@ -316,17 +375,34 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     marginHorizontal: spacing.lg,
+    marginTop: -spacing.lg,
     marginBottom: spacing.lg,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     ...shadows.sm,
   },
   statItem: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
+  },
+  statIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.pill,
+    backgroundColor: colors.accentSurface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: colors.borderLight,
   },
   menuSection: {
     paddingHorizontal: spacing.lg,
@@ -335,6 +411,7 @@ const styles = StyleSheet.create({
   menuTitle: {
     marginBottom: spacing.md,
     marginLeft: spacing.xs,
+    letterSpacing: 1,
   },
   menuCard: {
     overflow: 'hidden',
@@ -353,21 +430,37 @@ const styles = StyleSheet.create({
   menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   menuIconBg: {
-    width: 38,
-    height: 38,
+    width: 42,
+    height: 42,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.primaryBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  menuItemLabel: {
+  menuItemText: {
+    flex: 1,
+    minWidth: 0,
     marginLeft: spacing.md,
   },
-  logoutButton: {
-    alignItems: 'center',
-    paddingVertical: spacing['2xl'],
+  menuItemSubtitle: {
+    marginTop: 2,
+  },
+  logoutWrap: {
+    paddingHorizontal: spacing.lg,
     marginTop: spacing.lg,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.errorLight,
+  },
+  logoutLabel: {
+    marginLeft: spacing.sm,
   },
 });

@@ -57,7 +57,7 @@ export default async function OrdersPage() {
             href="/shop"
             className="mt-6 inline-flex rounded-full bg-(--color-sun) px-7 py-3.5 text-sm font-semibold text-(--color-forest) transition-colors hover:bg-(--color-sun-dark)"
           >
-            Browse microgreens
+            Browse teas
           </Link>
         </div>
       ) : (

@@ -38,7 +38,7 @@ export async function FindYourBlend() {
             </p>
             <h2 className="font-serif-display mt-2 text-3xl text-(--color-forest) sm:text-4xl">Find Your Blend</h2>
             <p className="mt-2 max-w-md text-sm text-(--color-forest)/70">
-              Pick by the moment you drink it. Every blend is caffeine-free, 15 sachets a box.
+              Pick by the moment you drink it. Every blend is caffeine-free, 10 sachets a box.
             </p>
           </div>
           <Link

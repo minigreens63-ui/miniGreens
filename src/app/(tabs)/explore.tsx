@@ -1,12 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Pressable,
-  Image,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -91,6 +85,24 @@ function productTags(p: Product, categorySlug?: string): string[] {
   return (p.tags || []).filter((t) => t !== 'microgreens').slice(0, 2);
 }
 
+function capitalize(s: string): string {
+  return s.length ? s[0].toUpperCase() + s.slice(1) : s;
+}
+
+// Category chip icon — a quiet visual cue per shop section.
+function categoryIcon(slug: string | null): keyof typeof Ionicons.glyphMap {
+  switch (slug) {
+    case 'tea-blends':
+      return 'cafe-outline';
+    case 'microgreens':
+      return 'flower-outline';
+    case 'juices':
+      return 'nutrition-outline';
+    default:
+      return 'leaf';
+  }
+}
+
 // Section order comes from the admin-managed `sort_order` (useCategories already returns
 // categories sorted by it). Anything not in that list, e.g. "other", trails.
 function catRank(categories: { slug: string }[], slug: string): number {
@@ -102,12 +114,13 @@ function catRank(categories: { slug: string }[], slug: string): number {
 
 interface ChipProps {
   label: string;
+  icon: keyof typeof Ionicons.glyphMap;
   selected: boolean;
   onPress: () => void;
   index: number;
 }
 
-function FilterChip({ label, selected, onPress, index }: ChipProps) {
+function FilterChip({ label, icon, selected, onPress, index }: ChipProps) {
   const scale = useSharedValue(1);
   const fill = useSharedValue(selected ? 1 : 0);
 
@@ -133,6 +146,12 @@ function FilterChip({ label, selected, onPress, index }: ChipProps) {
         style={[styles.chip, selected && styles.chipSelected]}
       >
         <Animated.View style={[StyleSheet.absoluteFill, styles.chipFill, fillStyle]} />
+        <Ionicons
+          name={icon}
+          size={15}
+          color={selected ? colors.textInverse : colors.textSecondary}
+          style={styles.chipIcon}
+        />
         <Typography
           variant="bodySmall"
           color={selected ? colors.textInverse : colors.textSecondary}
@@ -171,6 +190,7 @@ function BlendRow({ product, index, categorySlug }: { product: Product; index: n
   const items = useCartStore((s) => s.items);
   const addItemBySlug = useCartStore((s) => s.addItemBySlug);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const [saved, setSaved] = useState(false);
 
   const inCart = items.find((i) => i.productId === product.id);
   const qty = inCart?.quantity ?? 0;
@@ -178,6 +198,11 @@ function BlendRow({ product, index, categorySlug }: { product: Product; index: n
   const { name, variant } = splitName(product.name);
   const accent = blendAccent(product.name);
   const tags = useMemo(() => productTags(product, categorySlug), [product.id, categorySlug]);
+
+  const toggleSaved = () => {
+    Haptics.selectionAsync();
+    setSaved((s) => !s);
+  };
 
   const add = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -199,11 +224,11 @@ function BlendRow({ product, index, categorySlug }: { product: Product; index: n
       style={styles.row}
     >
       <Pressable style={styles.rowMain} onPress={() => router.push(`/product/${product.slug}`)}>
-        <View style={[styles.thumbRing, { borderColor: accent }]}>
+        <View style={styles.thumbBox}>
           <View style={[styles.thumbFallback, { backgroundColor: accent + '22' }]}>
-            <Ionicons name="leaf" size={20} color={accent} />
+            <Ionicons name="leaf" size={24} color={accent} />
           </View>
-          <Image source={resolveImageSource(product.images?.[0])} style={styles.thumb} resizeMode="cover" />
+          <Image source={resolveImageSource(product.images?.[0])} style={styles.thumb} contentFit="cover" cachePolicy="memory-disk" />
         </View>
 
         <View style={styles.rowBody}>
@@ -213,18 +238,28 @@ function BlendRow({ product, index, categorySlug }: { product: Product; index: n
               <Typography variant="caption" color={colors.textMuted}>  {variant}</Typography>
             ) : null}
           </Typography>
-          <Typography variant="caption" color={colors.textSecondary} numberOfLines={1} style={styles.rowDesc}>
+          <Typography variant="caption" color={colors.textSecondary} numberOfLines={2} style={styles.rowDesc}>
             {product.description}
           </Typography>
           <View style={styles.tagRow}>
             {tags.map((t) => (
               <View key={t} style={styles.tag}>
-                <Typography variant="caption" color={colors.accentSoft} style={styles.tagText}>{t}</Typography>
+                <Typography variant="caption" color={colors.accentSoft} style={styles.tagText}>{capitalize(t)}</Typography>
               </View>
             ))}
           </View>
         </View>
       </Pressable>
+
+      <PressableScale
+        style={styles.heartBtn}
+        onPress={toggleSaved}
+        scaleTo={0.9}
+        haptic={false}
+        accessibilityLabel={saved ? `Remove ${name} from saved` : `Save ${name}`}
+      >
+        <Ionicons name={saved ? 'heart' : 'heart-outline'} size={17} color={saved ? colors.accent : colors.textTertiary} />
+      </PressableScale>
 
       <View style={styles.rowRight}>
         <Typography variant="bodySmall" weight="bold" color={colors.accent}>
@@ -232,7 +267,7 @@ function BlendRow({ product, index, categorySlug }: { product: Product; index: n
         </Typography>
         {qty === 0 ? (
           <PressableScale style={styles.addBtn} onPress={add} scaleTo={0.94} haptic={false} accessibilityLabel={`Add ${name}`}>
-            <Ionicons name="add" size={14} color={colors.textInverse} />
+            <Ionicons name="cart-outline" size={14} color={colors.textInverse} />
             <Typography variant="caption" color={colors.textInverse} weight="bold" style={styles.addBtnText}>Add</Typography>
           </PressableScale>
         ) : (
@@ -310,14 +345,23 @@ export default function ExploreScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Animated.View entering={FadeInUp.springify().damping(31).mass(1).stiffness(100)} style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Typography variant="h2" color={colors.textPrimary} style={styles.title}>Shop</Typography>
-          <Typography variant="caption" color={colors.textSecondary} style={styles.subtitle}>
-            Tea blends, microgreens and juices — fresh from MiniGreens.
-          </Typography>
+        <View pointerEvents="none" style={styles.headerFlourish}>
+          <Ionicons name="leaf" size={70} color={colors.green[200]} style={styles.flourishLeafBack} />
+          <Ionicons name="leaf" size={48} color={colors.primaryLight} style={styles.flourishLeafFront} />
         </View>
-        <View style={styles.searchBtn}>
-          <HeaderIconButton icon="search" onPress={handleSearch} label="Search" />
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <Typography variant="label" color={colors.accentSoft}>Shop</Typography>
+            <Typography variant="h3" color={colors.textPrimary} style={styles.title}>
+              Tea blends, microgreens and juices
+            </Typography>
+            <Typography variant="bodySmall" color={colors.textSecondary} style={styles.subtitle}>
+              Fresh, natural and nutritious — from MiniGreens.
+            </Typography>
+          </View>
+          <View style={styles.searchBtn}>
+            <HeaderIconButton icon="search" onPress={handleSearch} label="Search" />
+          </View>
         </View>
       </Animated.View>
 
@@ -330,11 +374,18 @@ export default function ExploreScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipsScroll}
         >
-          <FilterChip label="All" selected={selectedCat === null} onPress={() => setSelectedCat(null)} index={0} />
+          <FilterChip
+            label="All"
+            icon={categoryIcon(null)}
+            selected={selectedCat === null}
+            onPress={() => setSelectedCat(null)}
+            index={0}
+          />
           {catChips.map((cat, i) => (
             <FilterChip
               key={cat.slug}
               label={cat.name}
+              icon={categoryIcon(cat.slug)}
               selected={selectedCat === cat.slug}
               onPress={() => setSelectedCat(cat.slug)}
               index={i + 1}
@@ -358,7 +409,9 @@ export default function ExploreScreen() {
             {g.family ? (
               <View style={styles.groupHeader}>
                 <Typography variant="label" color={colors.accentSoft}>{g.family}</Typography>
-                <Typography variant="caption" color={colors.textMuted}>{g.items.length}</Typography>
+                <Typography variant="caption" color={colors.textMuted}>
+                  {g.items.length} {g.items.length === 1 ? 'product' : 'products'}
+                </Typography>
               </View>
             ) : null}
             {g.items.map((p) => (
@@ -401,15 +454,41 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    position: 'relative',
+    overflow: 'hidden',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
   },
+  headerFlourish: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    width: 100,
+    height: 100,
+  },
+  flourishLeafBack: {
+    position: 'absolute',
+    top: 2,
+    right: 0,
+    opacity: 0.5,
+    transform: [{ rotate: '18deg' }],
+  },
+  flourishLeafFront: {
+    position: 'absolute',
+    top: 34,
+    right: 32,
+    opacity: 0.55,
+    transform: [{ rotate: '-12deg' }],
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
   title: {
-    fontSize: 30,
-    lineHeight: 34,
+    marginTop: 2,
+    fontSize: 26,
+    lineHeight: 32,
   },
   subtitle: {
     marginTop: 4,
@@ -425,6 +504,8 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.pill,
@@ -432,6 +513,9 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
     overflow: 'hidden',
+  },
+  chipIcon: {
+    marginRight: 6,
   },
   chipSelected: {
     borderColor: colors.primary,
@@ -454,8 +538,9 @@ const styles = StyleSheet.create({
   },
 
   row: {
+    position: 'relative',
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     backgroundColor: colors.surface,
     borderRadius: borderRadius.card,
     padding: spacing.md,
@@ -466,21 +551,19 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  thumbRing: {
-    width: 56,
-    height: 56,
+  thumbBox: {
+    width: 76,
+    height: 100,
     borderRadius: borderRadius.control,
-    borderWidth: 2,
-    padding: 2,
     marginRight: spacing.md,
     overflow: 'hidden',
+    backgroundColor: colors.surfaceVariant,
   },
   thumb: {
     width: '100%',
     height: '100%',
-    borderRadius: borderRadius.control - 3,
     backgroundColor: 'transparent',
   },
   thumbFallback: {
@@ -493,13 +576,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   rowDesc: {
-    marginTop: 1,
+    marginTop: 2,
   },
   tagRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 5,
-    marginTop: 6,
+    marginTop: 8,
   },
   tag: {
     backgroundColor: colors.accentSurface,
@@ -511,8 +594,17 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     lineHeight: 13,
   },
+  heartBtn: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   rowRight: {
-    width: 84,
+    justifyContent: 'flex-end',
     alignItems: 'flex-end',
     marginLeft: spacing.sm,
     gap: 8,

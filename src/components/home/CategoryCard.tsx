@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { View, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -13,6 +14,7 @@ import { colors, spacing, borderRadius } from '../../theme';
 import { Typography } from '../ui/Typography';
 import { Category } from '../../types';
 import { resolveImageSource } from '../../utils/placeholders';
+import { PlaceholderImage } from '../ui/PlaceholderImage';
 
 interface CategoryCardProps {
   category: Category;
@@ -33,7 +35,7 @@ export function CategoryCard({
   variant = 'circle',
   imageOverride = null,
 }: CategoryCardProps) {
-  const imgSource = imageOverride != null ? imageOverride : resolveImageSource(category.image);
+  const imgSource = imageOverride != null ? imageOverride : category.image ? resolveImageSource(category.image) : null;
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -49,7 +51,11 @@ export function CategoryCard({
       >
         <Pressable onPress={handlePress} onPressIn={pressIn} onPressOut={pressOut} style={styles.cPress}>
           <View style={[styles.cCircle, active && styles.cCircleActive]}>
-            <Image source={imgSource} style={styles.cImage} resizeMode="cover" />
+            {imgSource ? (
+              <Image source={imgSource} style={styles.cImage} contentFit="cover" cachePolicy="memory-disk" />
+            ) : (
+              <PlaceholderImage label={category.name} style={styles.cImage} round />
+            )}
           </View>
           <Typography
             variant="caption"
@@ -72,7 +78,15 @@ export function CategoryCard({
       style={[styles.wrap, animStyle]}
     >
       <Pressable onPress={handlePress} onPressIn={pressIn} onPressOut={pressOut} style={[styles.card, active && styles.cardActive]}>
-        <Image source={resolveImageSource(category.image)} style={styles.image} resizeMode="cover" />
+        {category.image ? (
+          <Image
+            source={resolveImageSource(category.image)}
+            style={styles.image}
+            contentFit="cover" cachePolicy="memory-disk"
+          />
+        ) : (
+          <PlaceholderImage label={category.name} style={styles.image} />
+        )}
         <LinearGradient
           colors={['rgba(255,255,255,1)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0)']}
           locations={[0, 0.46, 1]}

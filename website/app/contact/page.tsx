@@ -5,7 +5,7 @@ import { PageShell, Panel } from "@/components/PageShell";
 export const metadata: Metadata = { title: "Contact | Mini Greens Company" };
 
 const DETAILS = [
-  { icon: Phone, label: "Phone", value: "+91 98765 43210" },
+  { icon: Phone, label: "Phone", value: "+91 99803 44273" },
   { icon: EnvelopeSimple, label: "Email", value: "theminigreenscompany@gmail.com" },
   { icon: MapPin, label: "Farm", value: "123 Green Farm Road, Wayanad, Kerala 673121" },
   { icon: Clock, label: "Hours", value: "Monday to Saturday, 7:00 – 18:00" },

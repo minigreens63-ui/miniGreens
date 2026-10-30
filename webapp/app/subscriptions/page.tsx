@@ -17,9 +17,9 @@ import { FOREST, Note, PAPER, TornEdge, TornPhoto, condensed, roughMaskStyle, sc
 import { SubscribeButton } from "@/components/story/SubscribeButton";
 
 export const metadata: Metadata = {
-  title: "Weekly Microgreens Subscription Boxes | Mini Greens Company",
+  title: "Weekly Microgreen Tea Subscription Boxes | Mini Greens Company",
   alternates: { canonical: "/subscriptions" },
-  description: "Weekly boxes of fresh microgreens and juices, harvested the morning they reach you.",
+  description: "Weekly boxes of microgreen tea blends, brewed fresh and delivered to your door.",
 };
 
 type HowStep = { n: string; icon: PhosphorIcon; title: string; kicker: string; body: string };
@@ -30,7 +30,7 @@ const HOW: HowStep[] = [
     icon: Basket,
     title: "Pick a Box",
     kicker: "Choose what fits your week",
-    body: "Juices for busy mornings, microgreens for the kitchen, or a box for the whole team.",
+    body: "A starter box for one, a family box, or a workplace box for the whole team.",
   },
   {
     n: "02",
@@ -67,7 +67,7 @@ export default function SubscriptionsPage() {
       <section className="relative isolate min-h-[600px] overflow-hidden lg:min-h-[700px]">
         <Image
           src="/images/story/subs-hero.webp"
-          alt="A kraft box of fresh microgreen trays on a stone wall above misty green hills at sunrise"
+          alt="A kraft box of Mini Greens tea tubes on a stone wall above misty green hills at sunrise"
           fill
           priority
           sizes="100vw"
@@ -96,8 +96,8 @@ export default function SubscriptionsPage() {
           </h1>
           <p className="mt-4 text-xl text-[#1f2a1c] lg:text-2xl">Harvested at dawn. At your door by breakfast.</p>
           <p className="mt-5 max-w-[27rem] text-[15px] leading-relaxed text-[#2f352c]">
-            Choose a box that fits your kitchen and we&apos;ll grow, cut and deliver it every week.
-            Skip a week whenever you like, and cancel any time. No lock-in, no hidden fees.
+            Choose a tea box that fits your week and we&apos;ll brew, pack and deliver it on
+            schedule. Skip a week whenever you like, and cancel any time. No lock-in, no hidden fees.
           </p>
           <a href="#how" className="group mt-8 inline-flex items-center gap-4">
             <span
@@ -272,7 +272,7 @@ export default function SubscriptionsPage() {
           <div className="relative lg:col-span-5">
             <TornPhoto
               src="/images/journal/grow-room.webp"
-              alt="Shelves of microgreen trays growing under soft lights"
+              alt="Shelves of microgreens growing under soft lights, dried and blended into Mini Greens teas"
               seed={97}
               tilt={-1.5}
             />
@@ -305,8 +305,8 @@ export default function SubscriptionsPage() {
                   Your greens, your rhythm
                 </p>
                 <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-[#3a4135]">
-                  Don&apos;t see a fit? Pick your own products and quantities, and choose weekly or
-                  monthly delivery.
+                  Don&apos;t see a fit? Pick your own tea blends and quantities, and choose weekly
+                  or monthly delivery.
                 </p>
                 <Link
                   href="/subscriptions/custom"

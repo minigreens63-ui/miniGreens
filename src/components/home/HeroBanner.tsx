@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Image, StyleSheet, Dimensions, Pressable } from 'react-native';
+import { View, StyleSheet, Dimensions, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { resolveImageSource } from '../../utils/placeholders';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,7 +46,7 @@ export function HeroBanner({ banner, onPress }: HeroBannerProps) {
         onPressOut={() => { scale.value = withSpring(1, { damping: 30, stiffness: 250, mass: 1 }); }}
         style={StyleSheet.absoluteFill}
       >
-        <Image source={resolveImageSource(banner.image)} style={styles.image} resizeMode="cover" />
+        <Image source={resolveImageSource(banner.image)} style={styles.image} contentFit="cover" cachePolicy="memory-disk" />
 
         {/* Forest-tinted gradient for brand identity */}
         <LinearGradient

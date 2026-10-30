@@ -1,12 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Pressable,
-  Image,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Pressable, Switch } from 'react-native';
+import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +27,8 @@ import { Screen } from '../../components/layout/Screen';
 import { useCartStore, cartSubtotal } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
-import { resolveImageSource, getProductPlaceholder } from '../../utils/placeholders';
+import { resolveImageSource } from '../../utils/placeholders';
+import { PlaceholderImage } from '../../components/ui/PlaceholderImage';
 import type { Database } from '../../types/database';
 
 type Address = Database['public']['Tables']['addresses']['Row'];
@@ -153,6 +148,14 @@ export default function CheckoutScreen() {
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
 
+  const [isGift, setIsGift] = useState(false);
+  const [giftOccasion, setGiftOccasion] = useState('');
+  const [giftRecipientName, setGiftRecipientName] = useState('');
+  const [giftRecipientPhone, setGiftRecipientPhone] = useState('');
+  const [giftRecipientAddress, setGiftRecipientAddress] = useState('');
+  const [giftSenderName, setGiftSenderName] = useState('');
+  const [giftSenderPhone, setGiftSenderPhone] = useState('');
+
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; amount: number } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -267,6 +270,10 @@ export default function CheckoutScreen() {
       setOrderError('Please select a delivery address.');
       return;
     }
+    if (isGift && (!giftRecipientName.trim() || !giftRecipientPhone.trim() || !giftRecipientAddress.trim())) {
+      setOrderError("Please add the recipient's name, phone and address for this gift.");
+      return;
+    }
     setPlacing(true);
 
     const orderNumber = `ORD${Date.now().toString().slice(-8)}`;
@@ -290,6 +297,13 @@ export default function CheckoutScreen() {
         business_address: null,
         discount_code: appliedCoupon?.code ?? null,
         discount_amount: discountAmount,
+        is_gift: isGift,
+        gift_occasion: isGift ? giftOccasion.trim() || null : null,
+        gift_recipient_name: isGift ? giftRecipientName.trim() : null,
+        gift_recipient_phone: isGift ? giftRecipientPhone.trim() : null,
+        gift_recipient_address: isGift ? giftRecipientAddress.trim() : null,
+        gift_sender_name: isGift ? giftSenderName.trim() || profile.full_name : null,
+        gift_sender_phone: isGift ? giftSenderPhone.trim() || profile.phone : null,
       })
       .select()
       .single();
@@ -340,10 +354,14 @@ export default function CheckoutScreen() {
               <Animated.View key={item.productId} entering={FadeInUp.delay(80 + i * 60).springify().damping(31).mass(1).stiffness(100)}>
                 <Card style={styles.productCard} variant="outlined" padding="lg">
                   <View style={styles.productRow}>
-                    <Image
-                      source={resolveImageSource(item.image ?? getProductPlaceholder(item.name))}
-                      style={styles.productImage}
-                    />
+                    {item.image ? (
+                      <Image
+                        source={resolveImageSource(item.image)}
+                        style={styles.productImage}
+                      />
+                    ) : (
+                      <PlaceholderImage label={item.name} style={styles.productImage} />
+                    )}
                     <View style={styles.productInfo}>
                       <Typography variant="body" weight="semibold">{item.name}</Typography>
                       <Typography variant="bodySmall" color={colors.textSecondary} style={{ marginTop: 2 }}>
@@ -438,6 +456,76 @@ export default function CheckoutScreen() {
             </View>
 
             <TextField label="Notes (Optional)" placeholder="Special instructions..." value={notes} onChangeText={setNotes} leftIcon="chatbubble-outline" multiline />
+
+            <View style={styles.giftToggleRow}>
+              <View style={{ flex: 1 }}>
+                <Typography variant="body" weight="semibold" color={colors.text}>Send this as a gift</Typography>
+                <Typography variant="bodySmall" color={colors.textSecondary}>
+                  We'll deliver to someone else and let you add an occasion.
+                </Typography>
+              </View>
+              <Switch
+                value={isGift}
+                onValueChange={(value) => {
+                  Haptics.selectionAsync();
+                  setIsGift(value);
+                  if (value && !giftSenderName) setGiftSenderName(profile?.full_name ?? '');
+                  if (value && !giftSenderPhone) setGiftSenderPhone(profile?.phone ?? '');
+                }}
+                trackColor={{ false: colors.borderSubtle, true: colors.primary }}
+              />
+            </View>
+
+            {isGift && (
+              <Animated.View entering={FadeIn}>
+                <TextField
+                  label="Occasion (optional)"
+                  placeholder="e.g. Birthday"
+                  value={giftOccasion}
+                  onChangeText={setGiftOccasion}
+                  leftIcon="gift-outline"
+                />
+                <TextField
+                  label="Recipient's name"
+                  placeholder="Who is this gift for?"
+                  value={giftRecipientName}
+                  onChangeText={setGiftRecipientName}
+                  leftIcon="person-outline"
+                />
+                <TextField
+                  label="Recipient's phone"
+                  placeholder="Their contact number"
+                  value={giftRecipientPhone}
+                  onChangeText={setGiftRecipientPhone}
+                  leftIcon="call-outline"
+                  keyboardType="phone-pad"
+                />
+                <TextField
+                  label="Recipient's delivery address"
+                  placeholder="Where should we deliver the gift?"
+                  value={giftRecipientAddress}
+                  onChangeText={setGiftRecipientAddress}
+                  leftIcon="location-outline"
+                  multiline
+                />
+                <TextField
+                  label="Your name (sender)"
+                  placeholder="So we know who it's from"
+                  value={giftSenderName}
+                  onChangeText={setGiftSenderName}
+                  leftIcon="person-circle-outline"
+                />
+                <TextField
+                  label="Your phone (sender)"
+                  placeholder="In case we need to reach you"
+                  value={giftSenderPhone}
+                  onChangeText={setGiftSenderPhone}
+                  leftIcon="call-outline"
+                  keyboardType="phone-pad"
+                />
+              </Animated.View>
+            )}
+
             <Button
               title="Select Address"
               variant="primary"
@@ -537,6 +625,7 @@ export default function CheckoutScreen() {
           }}
           style={styles.headerButton}
           activeOpacity={0.7}
+          accessibilityLabel="Close"
         >
           <Ionicons name="close" size={20} color={colors.text} />
         </TouchableOpacity>
@@ -617,6 +706,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.primaryBg,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  giftToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.lg,

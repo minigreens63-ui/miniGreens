@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, StyleSheet, ImageStyle } from 'react-native';
+import { StyleSheet, ImageStyle } from 'react-native';
+import { Image } from 'expo-image';
 import { colors } from '../../theme';
 
 interface AvatarProps {

@@ -16,7 +16,7 @@ const TEAM: Member[] = [
   {
     name: "Anand Lal S S",
     image: "/images/team/anand.webp",
-    role: "Co-Founder",
+    role: "Founder and CEO",
     bio: "Started the search for real, fresh nutrition and turned a curiosity about microgreens into a brand.",
     note: ["Where it", "all began."],
     seed: 61,

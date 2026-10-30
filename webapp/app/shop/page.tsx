@@ -6,7 +6,7 @@ import { HomeProductCard } from "@/components/home/HomeProductCard";
 import { ShopFilterChips } from "@/components/ShopFilterChips";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { resolveProductImage } from "@/lib/productImages";
-import { categoryCopy } from "@/lib/categories";
+import { categoryCopy, VISIBLE_CATEGORY_SLUGS } from "@/lib/categories";
 import { FOREST, Note, PAPER, TornEdge, TornPhoto, condensed, serif } from "@/components/story/primitives";
 
 // Handwritten aside in the hero, per category.
@@ -18,9 +18,9 @@ const HERO_NOTES: Record<string, string[]> = {
 const DEFAULT_NOTE = ["Grown with", "care, cut", "to order."];
 
 export const metadata: Metadata = {
-  title: "Shop Fresh Microgreens, Juices & Tea Blends | Mini Greens Company",
+  title: "Shop Microgreen Tea Blends | Mini Greens Company",
   description:
-    "Order pesticide-free microgreens, cold-pressed juices and microgreen tea blends, harvested to order in Bangalore and delivered fresh.",
+    "Order caffeine-free microgreen tea blends, brewed fresh and delivered across Bengaluru.",
   alternates: { canonical: "/shop" },
 };
 
@@ -63,11 +63,12 @@ export default async function ShopPage({
       .order("name"),
   ]);
 
-  const cats = categories ?? [];
+  // For now the webapp only showcases tea blends; see VISIBLE_CATEGORY_SLUGS.
+  const cats = (categories ?? []).filter((c) => VISIBLE_CATEGORY_SLUGS.includes(c.slug));
   const catById = new Map(cats.map((c) => [c.id, c]));
-  // Products in a category the admin has hidden are hidden with it.
+  // Products in a category the admin has hidden, or outside the visible set, are hidden with it.
   const rows = ((products ?? []) as ProductRow[]).filter(
-    (p) => !p.category_id || catById.has(p.category_id),
+    (p) => p.category_id && catById.has(p.category_id),
   );
   const catBySlug = new Map(cats.map((c) => [c.slug, c]));
 
@@ -97,8 +98,8 @@ export default async function ShopPage({
       {/* Hero */}
       <section className="relative isolate min-h-[520px] overflow-hidden lg:min-h-[600px]">
         <Image
-          src="/images/story/shop-hero.webp"
-          alt="A rustic farm table of fresh microgreens and juices on a misty hillside at sunrise"
+          src="/images/story/shop-hero-green-vitality.webp"
+          alt="A rustic farm table with a Mini Greens tea tube and cup on a misty hillside at sunrise"
           fill
           priority
           sizes="100vw"
