@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useMemo, useTransition } from "react";
-import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
+import { MagnifyingGlass, X, Trash } from "@phosphor-icons/react";
 import type { Database } from "@mobile/database";
-import { updateOrderStatus } from "@/app/dashboard/(protected)/orders/actions";
+import { updateOrderStatus, deleteOrder } from "@/app/dashboard/(protected)/orders/actions";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"] & {
   order_items: Database["public"]["Tables"]["order_items"]["Row"][];
@@ -54,11 +55,13 @@ const tabCount = (orders: OrderRow[], key: TabKey) =>
   key === "all" ? orders.length : orders.filter((o) => o.status === key).length;
 
 export default function OrdersClient({ orders }: { orders: OrderRow[] }) {
+  const router = useRouter();
   const [tab, setTab] = useState<TabKey>("all");
   const [typeFilter, setTypeFilter] = useState<OrderType | "all">("all");
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [drawerStatus, setDrawerStatus] = useState<OrderStatus | "">("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const typesPresent = useMemo(
@@ -90,6 +93,7 @@ export default function OrdersClient({ orders }: { orders: OrderRow[] }) {
   function closeDrawer() {
     setSelectedOrder(null);
     setDrawerStatus("");
+    setDeleteError(null);
   }
 
   function saveStatus() {
@@ -97,6 +101,20 @@ export default function OrdersClient({ orders }: { orders: OrderRow[] }) {
     startTransition(async () => {
       await updateOrderStatus(selectedOrder.id, drawerStatus);
       setSelectedOrder({ ...selectedOrder, status: drawerStatus });
+    });
+  }
+
+  function handleDelete(order: OrderRow) {
+    if (!confirm(`Delete order ${order.order_number}? This permanently removes it and releases any stock it was holding. This can't be undone.`)) return;
+    setDeleteError(null);
+    startTransition(async () => {
+      const { error } = await deleteOrder(order.id);
+      if (error) {
+        setDeleteError(error);
+        return;
+      }
+      closeDrawer();
+      router.refresh();
     });
   }
 
@@ -439,6 +457,17 @@ export default function OrdersClient({ orders }: { orders: OrderRow[] }) {
                   </div>
                 </div>
               )}
+
+              {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+
+              <button
+                disabled={isPending}
+                onClick={() => handleDelete(selectedOrder)}
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-all active:scale-[0.97] disabled:opacity-50"
+              >
+                <Trash size={15} />
+                Delete Order
+              </button>
             </div>
           </aside>
         </>
