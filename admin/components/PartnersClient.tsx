@@ -13,7 +13,50 @@ import {
   createPartner,
   invitePartner,
   searchProfilesForPartner,
+  uploadPartnerKycFiles,
+  addKycDocuments,
 } from "@/app/dashboard/(protected)/partners/actions";
+
+const KYC_ACCEPT = "image/*,application/pdf";
+const KYC_MAX_FILES = 5;
+
+function KycFilePicker({ files, onChange }: { files: File[]; onChange: (files: File[]) => void }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+        KYC Documents (optional)
+      </label>
+      <input
+        type="file"
+        multiple
+        accept={KYC_ACCEPT}
+        onChange={(e) => {
+          const picked = Array.from(e.target.files ?? []);
+          onChange([...files, ...picked].slice(0, KYC_MAX_FILES));
+          e.target.value = "";
+        }}
+        className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-600 hover:file:bg-slate-200"
+      />
+      {files.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {files.map((f, i) => (
+            <li key={`${f.name}-${i}`} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 text-xs">
+              <span className="flex-1 truncate text-slate-700" title={f.name}>{f.name}</span>
+              <button
+                type="button"
+                onClick={() => onChange(files.filter((_, idx) => idx !== i))}
+                className="text-slate-400 hover:text-red-600"
+              >
+                <X size={12} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-1 text-xs text-slate-400">Identity or business proof, up to {KYC_MAX_FILES} files (image or PDF).</p>
+    </div>
+  );
+}
 
 type Partner = Database["public"]["Tables"]["partners"]["Row"];
 type PartnerStatus = Partner["status"];
@@ -75,6 +118,7 @@ function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [contactPerson, setContactPerson] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [kycFiles, setKycFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -112,6 +156,14 @@ function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreate
       }
       setError(null);
       startTransition(async () => {
+        let kycDocuments;
+        if (kycFiles.length > 0) {
+          const formData = new FormData();
+          kycFiles.forEach((f) => formData.append("files", f));
+          const result = await uploadPartnerKycFiles(profile.id, formData);
+          kycDocuments = result.docs;
+          if (result.error) setError(result.error);
+        }
         const { error: createError } = await createPartner({
           profileId: profile.id,
           businessType,
@@ -119,6 +171,7 @@ function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreate
           contactPerson: contactPerson.trim(),
           phone: phone.trim(),
           address: address.trim(),
+          kycDocuments,
         });
         if (createError) {
           setError(createError);
@@ -135,18 +188,30 @@ function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreate
     }
     setError(null);
     startTransition(async () => {
-      const { error: inviteError } = await invitePartner({
-        email: inviteEmail.trim(),
-        fullName: contactPerson.trim(),
-        businessType,
-        businessName: businessName.trim(),
-        contactPerson: contactPerson.trim(),
-        phone: phone.trim(),
-        address: address.trim(),
-      });
+      let kycFormData: FormData | undefined;
+      if (kycFiles.length > 0) {
+        kycFormData = new FormData();
+        kycFiles.forEach((f) => kycFormData!.append("files", f));
+      }
+      const { error: inviteError, warning } = await invitePartner(
+        {
+          email: inviteEmail.trim(),
+          fullName: contactPerson.trim(),
+          businessType,
+          businessName: businessName.trim(),
+          contactPerson: contactPerson.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+        },
+        kycFormData,
+      );
       if (inviteError) {
         setError(inviteError);
         return;
+      }
+      if (warning) {
+        // Partner was still created — only the document upload had trouble.
+        alert(`Partner invited, but: ${warning}`);
       }
       onCreated();
     });
@@ -300,6 +365,8 @@ function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreate
             />
           </div>
 
+          <KycFilePicker files={kycFiles} onChange={setKycFiles} />
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
@@ -308,9 +375,11 @@ function AddPartnerModal({ onClose, onCreated }: { onClose: () => void; onCreate
             className="w-full py-2.5 text-sm font-semibold rounded-xl bg-[#0A2416] text-white transition-all active:scale-[0.97] disabled:opacity-50"
           >
             {isPending
-              ? mode === "invite"
-                ? "Sending invite..."
-                : "Adding..."
+              ? kycFiles.length > 0
+                ? "Uploading & saving..."
+                : mode === "invite"
+                  ? "Sending invite..."
+                  : "Adding..."
               : mode === "invite"
                 ? "Send Invite"
                 : "Add Partner"}
@@ -327,6 +396,8 @@ export default function PartnersClient({ partners }: { partners: Partner[] }) {
   const [selected, setSelected] = useState<Partner | null>(null);
   const [feeInput, setFeeInput] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [drawerKycFiles, setDrawerKycFiles] = useState<File[]>([]);
+  const [drawerKycError, setDrawerKycError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const filtered = useMemo(
@@ -337,10 +408,33 @@ export default function PartnersClient({ partners }: { partners: Partner[] }) {
   function openDrawer(partner: Partner) {
     setSelected(partner);
     setFeeInput(String(partner.platform_fee_percent));
+    setDrawerKycFiles([]);
+    setDrawerKycError(null);
   }
 
   function closeDrawer() {
     setSelected(null);
+  }
+
+  function handleAddKycDocuments(partnerId: string, profileId: string) {
+    if (drawerKycFiles.length === 0) return;
+    setDrawerKycError(null);
+    startTransition(async () => {
+      const formData = new FormData();
+      drawerKycFiles.forEach((f) => formData.append("files", f));
+      const { docs, error: uploadError } = await uploadPartnerKycFiles(profileId, formData);
+      if (uploadError) setDrawerKycError(uploadError);
+      if (docs.length === 0) return;
+      const { error: saveError } = await addKycDocuments(partnerId, docs);
+      if (saveError) {
+        setDrawerKycError(saveError);
+        return;
+      }
+      setSelected((cur) =>
+        cur && cur.id === partnerId ? { ...cur, kyc_documents: [...cur.kyc_documents, ...docs] } : cur,
+      );
+      setDrawerKycFiles([]);
+    });
   }
 
   function handleApprove(id: string) {
@@ -552,6 +646,22 @@ export default function PartnersClient({ partners }: { partners: Partner[] }) {
                     ))}
                   </ul>
                 )}
+
+                <div className="mt-2">
+                  <KycFilePicker files={drawerKycFiles} onChange={setDrawerKycFiles} />
+                  {drawerKycError && <p className="mt-1 text-sm text-red-600">{drawerKycError}</p>}
+                  {drawerKycFiles.length > 0 && (
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleAddKycDocuments(selected.id, selected.profile_id)}
+                      className="mt-2 w-full py-2 text-sm font-semibold rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all active:scale-[0.97] disabled:opacity-50"
+                    >
+                      {isPending ? "Uploading..." : "Upload document(s)"}
+                    </button>
+                  )}
+                </div>
+
                 <div className="flex gap-2 mt-2">
                   <button
                     disabled={isPending || selected.kyc_status === "verified"}
