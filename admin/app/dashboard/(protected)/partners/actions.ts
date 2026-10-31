@@ -197,3 +197,13 @@ export async function updateKycStatus(
   await supabase.from("partners").update({ kyc_status: kycStatus }).eq("id", partnerId);
   revalidatePath("/dashboard/partners");
 }
+
+// Only removes the partner row (and, via cascade, their payout records) —
+// the underlying MGC account (profiles/auth.users) is left untouched, same
+// as rejecting an application just without keeping the record around.
+export async function deletePartner(partnerId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.from("partners").delete().eq("id", partnerId);
+  revalidatePath("/dashboard/partners");
+  return { error: error?.message ?? null };
+}

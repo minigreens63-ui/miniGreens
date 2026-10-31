@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "@phosphor-icons/react";
+import { X, Trash } from "@phosphor-icons/react";
 import type { Database, KycDocument, KycStatus } from "@mobile/database";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
@@ -15,6 +15,7 @@ import {
   searchProfilesForPartner,
   uploadPartnerKycFiles,
   addKycDocuments,
+  deletePartner,
 } from "@/app/dashboard/(protected)/partners/actions";
 
 const KYC_ACCEPT = "image/*,application/pdf";
@@ -398,6 +399,7 @@ export default function PartnersClient({ partners }: { partners: Partner[] }) {
   const [addOpen, setAddOpen] = useState(false);
   const [drawerKycFiles, setDrawerKycFiles] = useState<File[]>([]);
   const [drawerKycError, setDrawerKycError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const filtered = useMemo(
@@ -414,6 +416,21 @@ export default function PartnersClient({ partners }: { partners: Partner[] }) {
 
   function closeDrawer() {
     setSelected(null);
+    setDeleteError(null);
+  }
+
+  function handleDelete(partner: Partner) {
+    if (!confirm(`Delete ${partner.business_name}? This permanently removes their partner record and payout history. This can't be undone.`)) return;
+    setDeleteError(null);
+    startTransition(async () => {
+      const { error } = await deletePartner(partner.id);
+      if (error) {
+        setDeleteError(error);
+        return;
+      }
+      closeDrawer();
+      router.refresh();
+    });
   }
 
   function handleAddKycDocuments(partnerId: string, profileId: string) {
@@ -707,6 +724,17 @@ export default function PartnersClient({ partners }: { partners: Partner[] }) {
                   <p className="mt-2 text-xs text-slate-400">Women Partners default to 0% platform fee.</p>
                 )}
               </div>
+
+              {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+
+              <button
+                disabled={isPending}
+                onClick={() => handleDelete(selected)}
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-all active:scale-[0.97] disabled:opacity-50"
+              >
+                <Trash size={15} />
+                Delete Partner
+              </button>
             </div>
           </aside>
         </>
