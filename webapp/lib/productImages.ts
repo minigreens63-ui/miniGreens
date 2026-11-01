@@ -99,9 +99,18 @@ const BOTTLE_IMAGE_FILENAMES = new Set([
 /**
  * Transparent cutouts must be shown whole (contain + breathing room); photos
  * fill their frame. Pass the result as the `<Image>` className.
+ *
+ * Only the curated local lifestyle shots (`/images/...`) are cropped to fill —
+ * they're pre-composed to that square aspect. Anything else (images admins
+ * upload through the dashboard) can be any aspect ratio, so it's shown whole
+ * rather than cropped.
  */
 export function productImageFit(src: string | null | undefined): string {
   if (!src) return "object-cover";
+  if (!src.startsWith("/images/")) return "object-contain";
+  // Tea tin shots are composed with the whole tin plus a brewed cup in frame —
+  // cropping to fill cuts off the top/bottom of the tin, so show them whole.
+  if (src.startsWith("/images/tea/blends/")) return "object-contain";
   const filename = src.split("/").pop() ?? "";
   if (BOTTLE_IMAGE_FILENAMES.has(filename)) return "object-cover scale-[1.3]";
   return "object-cover";

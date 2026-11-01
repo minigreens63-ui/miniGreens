@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { X, Plus, Trash } from "@phosphor-icons/react";
 import type { Database } from "@mobile/database";
 import { createProduct, updateProduct, deleteProduct } from "@/app/dashboard/(protected)/products/actions";
@@ -53,8 +54,10 @@ export default function ProductsClient({
   products: Product[];
   categories: Category[];
 }) {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("all");
   const [selected, setSelected] = useState<Product | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [editFields, setEditFields] = useState({ name: "", price: "", stock: "" });
   const [editExistingImages, setEditExistingImages] = useState<string[]>([]);
   const [editNewImages, setEditNewImages] = useState<ImageDraft[]>([]);
@@ -90,6 +93,7 @@ export default function ProductsClient({
     editNewImages.forEach((d) => URL.revokeObjectURL(d.preview));
     setEditNewImages([]);
     setSelected(null);
+    setDeleteError(null);
   }
 
   function removeExistingEditImage(index: number) {
@@ -113,6 +117,7 @@ export default function ProductsClient({
     startTransition(async () => {
       await updateProduct(p.id, { [key]: !p[key] });
       if (selected?.id === p.id) setSelected({ ...selected, [key]: !p[key] });
+      router.refresh();
     });
   }
 
@@ -130,6 +135,7 @@ export default function ProductsClient({
         editNewImages.forEach((d) => URL.revokeObjectURL(d.preview));
         setEditNewImages([]);
         setSelected(null);
+        router.refresh();
       } finally {
         setIsUploading(false);
       }
@@ -137,9 +143,22 @@ export default function ProductsClient({
   }
 
   function handleDelete(id: string) {
+    setDeleteError(null);
     startTransition(async () => {
-      await deleteProduct(id);
+      const result = await deleteProduct(id);
+      if (result.error) {
+        setDeleteError(result.error);
+        return;
+      }
+      if (result.archivedInstead) {
+        setDeleteError(
+          "This product has order history, so it can't be fully deleted — it was hidden from sale instead."
+        );
+        router.refresh();
+        return;
+      }
       closeDrawer();
+      router.refresh();
     });
   }
 
@@ -225,6 +244,7 @@ export default function ProductsClient({
           tags: [],
         });
         resetAddForm();
+        router.refresh();
       } finally {
         setIsUploading(false);
       }
@@ -439,6 +459,8 @@ export default function ProductsClient({
                   ))}
                 </div>
               </div>
+
+              {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
 
               <button
                 disabled={isPending}
