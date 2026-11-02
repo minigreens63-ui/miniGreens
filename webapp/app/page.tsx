@@ -5,6 +5,7 @@ import { Bestsellers, BestsellersSkeleton } from "@/components/home/Bestsellers"
 import { FindYourBlend } from "@/components/home/FindYourBlend";
 import { FarmStory } from "@/components/home/FarmStory";
 import { SignatureProduct } from "@/components/home/SignatureProduct";
+import { SumamSection } from "@/components/home/SumamSection";
 import { TrustPromise } from "@/components/home/TrustPromise";
 import { JoinSection } from "@/components/home/JoinSection";
 import { StickyShopBar } from "@/components/home/StickyShopBar";
@@ -52,6 +53,7 @@ export default function Home() {
         <SignatureProduct />
       </Suspense>
       <FarmStory />
+      <SumamSection />
       <TrustPromise />
       <JoinSection />
       <StickyShopBar />
