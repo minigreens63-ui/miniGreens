@@ -1,4 +1,4 @@
-import { ArrowsClockwise, Coffee, Plant } from "@phosphor-icons/react/dist/ssr";
+import { ArrowsClockwise, Cake, Coffee, Plant } from "@phosphor-icons/react/dist/ssr";
 import { BRAND_CLAIM_SHORT } from "@/lib/brand";
 
 export function AnnouncementBar() {
@@ -17,6 +17,10 @@ export function AnnouncementBar() {
           <p className="flex items-center gap-1.5">
             <ArrowsClockwise size={14} weight="bold" className="text-(--color-sun)" />
             Subscriptions: skip or cancel anytime
+          </p>
+          <p className="flex items-center gap-1.5">
+            <Cake size={14} weight="fill" className="text-(--color-sun)" />
+            Sending a gift? Birthday orders available at checkout
           </p>
         </div>
       </div>
