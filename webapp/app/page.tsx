@@ -7,7 +7,8 @@ import { FarmStory } from "@/components/home/FarmStory";
 // import { SignatureProduct } from "@/components/home/SignatureProduct"; // hidden for now
 import { SumamSection } from "@/components/home/SumamSection";
 import { TrustPromise } from "@/components/home/TrustPromise";
-import { JoinSection } from "@/components/home/JoinSection";
+import { GiftOrdersBanner } from "@/components/home/GiftOrdersBanner";
+// import { JoinSection } from "@/components/home/JoinSection"; // hidden for now
 import { StickyShopBar } from "@/components/home/StickyShopBar";
 import { SubscriptionTeaser } from "@/components/SubscriptionTeaser";
 import { SITE_URL } from "@/lib/site";
@@ -56,7 +57,8 @@ export default function Home() {
       <FarmStory />
       <SumamSection />
       <TrustPromise />
-      <JoinSection />
+      <GiftOrdersBanner />
+      {/* <JoinSection /> */}
       <StickyShopBar />
     </div>
   );
