@@ -98,12 +98,20 @@ export default async function ShopPage({
       {/* Hero */}
       <section className="relative isolate min-h-[520px] overflow-hidden lg:min-h-[600px]">
         <Image
+          src="/images/story/shop-hero-root-leaf-balance-mobile.webp"
+          alt="A Mini Greens Root & Leaf Balance tea tin and cup on a wooden table above misty tea hills at sunrise"
+          fill
+          priority
+          sizes="100vw"
+          className="-z-10 object-cover object-[center_30%] md:hidden"
+        />
+        <Image
           src="/images/story/shop-hero-root-leaf-balance.webp"
           alt="A Mini Greens Root & Leaf Balance tea tin and cup on a wooden table above misty tea hills at sunrise"
           fill
           priority
           sizes="100vw"
-          className="-z-10 object-cover object-[70%_center] lg:object-center"
+          className="-z-10 hidden object-cover object-[70%_center] md:block lg:object-center"
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#f6f1e3]/90 via-[#f6f1e3]/60 to-transparent lg:hidden" />
         <div
