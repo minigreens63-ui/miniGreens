@@ -21,6 +21,7 @@ export type DiscountTarget = 'all' | 'category' | 'product' | 'subscription_plan
 export type PaymentStatus = 'pending' | 'paid' | 'failed';
 export type PayoutStatus = 'pending' | 'processing' | 'paid' | 'rejected';
 export type KycStatus = 'pending' | 'verified' | 'rejected';
+export type SumamApplicationStatus = 'pending' | 'contacted' | 'closed';
 
 export interface KycDocument {
   name: string;
@@ -514,6 +515,31 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['consent_log']['Insert']>;
+        Relationships: [];
+      };
+      sumam_applications: {
+        Row: {
+          id: string;
+          full_name: string;
+          email: string;
+          phone: string;
+          address: string;
+          message: string | null;
+          aadhaar_document: KycDocument | null;
+          status: SumamApplicationStatus;
+          applied_at: string;
+        };
+        Insert: Omit<
+          Database['public']['Tables']['sumam_applications']['Row'],
+          'id' | 'message' | 'aadhaar_document' | 'status' | 'applied_at'
+        > & {
+          id?: string;
+          message?: string | null;
+          aadhaar_document?: KycDocument | null;
+          status?: SumamApplicationStatus;
+          applied_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['sumam_applications']['Insert']>;
         Relationships: [];
       };
       contact_messages: {

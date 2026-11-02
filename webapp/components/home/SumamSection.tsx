@@ -59,7 +59,7 @@ export function SumamSection() {
               <ArrowRight size={15} weight="bold" />
             </Link>
             <Link
-              href="/contact"
+              href="/women-who-grow/register"
               className="inline-flex items-center gap-2 rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-white"
             >
               Join Sumam

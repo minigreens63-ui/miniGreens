@@ -20,6 +20,7 @@ import {
   Tag,
   Stack,
   ShieldCheck,
+  HandHeart,
 } from "@phosphor-icons/react";
 import { logout } from "@/app/dashboard/login/actions";
 
@@ -28,6 +29,7 @@ const navLinks = [
   { href: "/dashboard/orders", label: "Orders", icon: ClipboardText, active: true },
   { href: "/dashboard/delivery", label: "Delivery Queue", icon: Truck, active: true },
   { href: "/dashboard/partners", label: "Partners", icon: Handshake, active: true },
+  { href: "/dashboard/sumam", label: "Sumam Applications", icon: HandHeart, active: true },
   { href: "/dashboard/products", label: "Products", icon: Package, active: true },
   { href: "/dashboard/categories", label: "Categories", icon: Stack, active: true },
   { href: "/dashboard/discounts", label: "Discounts", icon: Tag, active: true },

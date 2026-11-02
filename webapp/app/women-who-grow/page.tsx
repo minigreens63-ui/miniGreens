@@ -152,10 +152,10 @@ export default function WomenWhoGrowPage() {
             and our team will get in touch.
           </p>
           <Link
-            href="/contact"
+            href="/women-who-grow/register"
             className="mt-8 inline-flex items-center rounded-full bg-(--color-forest) px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
           >
-            Get in touch
+            Apply to Sumam
           </Link>
         </section>
 
