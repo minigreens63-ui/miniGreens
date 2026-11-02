@@ -98,8 +98,8 @@ export default async function ShopPage({
       {/* Hero */}
       <section className="relative isolate min-h-[520px] overflow-hidden lg:min-h-[600px]">
         <Image
-          src="/images/story/shop-hero-green-vitality.webp"
-          alt="A rustic farm table with a Mini Greens tea tube and cup on a misty hillside at sunrise"
+          src="/images/story/shop-hero-root-leaf-balance.webp"
+          alt="A Mini Greens Root & Leaf Balance tea tin and cup on a wooden table above misty tea hills at sunrise"
           fill
           priority
           sizes="100vw"
