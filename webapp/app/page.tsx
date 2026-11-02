@@ -4,7 +4,7 @@ import { HomeHero } from "@/components/home/HomeHero";
 import { Bestsellers, BestsellersSkeleton } from "@/components/home/Bestsellers";
 import { FindYourBlend } from "@/components/home/FindYourBlend";
 import { FarmStory } from "@/components/home/FarmStory";
-import { SignatureProduct } from "@/components/home/SignatureProduct";
+// import { SignatureProduct } from "@/components/home/SignatureProduct"; // hidden for now
 import { SumamSection } from "@/components/home/SumamSection";
 import { TrustPromise } from "@/components/home/TrustPromise";
 import { JoinSection } from "@/components/home/JoinSection";
@@ -49,9 +49,10 @@ export default function Home() {
         <FindYourBlend />
       </Suspense>
       <SubscriptionTeaser />
-      <Suspense fallback={<div className="min-h-[520px] bg-(--color-cream)" />}>
+      {/* Hidden for now; re-enable once ready to showcase a signature product again. */}
+      {/* <Suspense fallback={<div className="min-h-[520px] bg-(--color-cream)" />}>
         <SignatureProduct />
-      </Suspense>
+      </Suspense> */}
       <FarmStory />
       <SumamSection />
       <TrustPromise />
