@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle, MapPin, Plus, Trash } from "@phosphor-icons/react";
+import { CheckCircle, Gift, MapPin, Plus, Trash } from "@phosphor-icons/react";
 import type { Database } from "@mobile/database";
 import { useAuth } from "@/context/AuthContext";
 import { useCartStore, cartSubtotal } from "@/store/useCartStore";
@@ -63,6 +63,15 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponChecking, setCouponChecking] = useState(false);
 
+  const [isGift, setIsGift] = useState(false);
+  const [profile, setProfile] = useState<{ full_name: string; phone: string | null } | null>(null);
+  const [giftOccasion, setGiftOccasion] = useState("");
+  const [giftRecipientName, setGiftRecipientName] = useState("");
+  const [giftRecipientPhone, setGiftRecipientPhone] = useState("");
+  const [giftRecipientAddress, setGiftRecipientAddress] = useState("");
+  const [giftSenderName, setGiftSenderName] = useState("");
+  const [giftSenderPhone, setGiftSenderPhone] = useState("");
+
   const subtotal = cartSubtotal(items);
   const discountAmount = appliedCoupon ? Math.min(appliedCoupon.amount, subtotal) : 0;
   const total = Math.max(subtotal - discountAmount + DELIVERY_FEE, 0);
@@ -84,6 +93,19 @@ export default function CheckoutPage() {
         setAddresses(rows);
         if (rows.length > 0) setAddressChoice(rows[0].id);
       });
+  }, [user]);
+
+  // Own name/phone for the gift-sender fields, since gift mode hides the
+  // address picker that would otherwise have filled these in.
+  useEffect(() => {
+    if (!user) return;
+    const supabase = createSupabaseBrowserClient();
+    supabase
+      .from("profiles")
+      .select("full_name, phone")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => setProfile(data));
   }, [user]);
 
   useEffect(() => {
@@ -216,16 +238,22 @@ export default function CheckoutPage() {
   async function handlePlaceOrder(e: React.FormEvent) {
     e.preventDefault();
     if (!user || items.length === 0) return;
+    if (isGift && (!giftRecipientName.trim() || !giftRecipientPhone.trim() || !giftRecipientAddress.trim())) {
+      setError("Please add the recipient's name, phone and address for this gift.");
+      return;
+    }
     setPlacing(true);
     setError(null);
 
-    let addressId: string;
-    try {
-      addressId = await resolveAddressId();
-    } catch (err) {
-      setPlacing(false);
-      setError(err instanceof Error ? err.message : "Could not save delivery address.");
-      return;
+    let addressId: string | null = null;
+    if (!isGift) {
+      try {
+        addressId = await resolveAddressId();
+      } catch (err) {
+        setPlacing(false);
+        setError(err instanceof Error ? err.message : "Could not save delivery address.");
+        return;
+      }
     }
 
     const supabase = createSupabaseBrowserClient();
@@ -251,6 +279,13 @@ export default function CheckoutPage() {
         business_address: null,
         discount_code: appliedCoupon?.code ?? null,
         discount_amount: discountAmount,
+        is_gift: isGift,
+        gift_occasion: isGift ? giftOccasion.trim() || null : null,
+        gift_recipient_name: isGift ? giftRecipientName.trim() : null,
+        gift_recipient_phone: isGift ? giftRecipientPhone.trim() : null,
+        gift_recipient_address: isGift ? giftRecipientAddress.trim() : null,
+        gift_sender_name: isGift ? giftSenderName.trim() || profile?.full_name || null : null,
+        gift_sender_phone: isGift ? giftSenderPhone.trim() || profile?.phone || null : null,
       })
       .select()
       .single();
@@ -352,7 +387,101 @@ export default function CheckoutPage() {
               Pre-orders take about a week to prepare and deliver. We&apos;ll confirm your exact delivery slot over the phone.
             </p>
 
-            {addresses.length > 0 && (
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-black/[0.07] px-4 py-3.5">
+              <Gift size={18} className="mt-0.5 shrink-0 text-(--color-forest)" />
+              <label className="flex flex-1 cursor-pointer items-start justify-between gap-3">
+                <span>
+                  <span className="block text-sm font-semibold text-(--color-forest)">Send this as a gift</span>
+                  <span className="block text-sm text-(--color-forest)/70">
+                    We&apos;ll deliver straight to the recipient and let you add an occasion.
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  className="mt-1 size-4 shrink-0 accent-(--color-forest)"
+                  checked={isGift}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIsGift(checked);
+                    if (checked && !giftSenderName) setGiftSenderName(profile?.full_name ?? "");
+                    if (checked && !giftSenderPhone) setGiftSenderPhone(profile?.phone ?? "");
+                  }}
+                />
+              </label>
+            </div>
+
+            {isGift && (
+              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className={labelClass} htmlFor="giftOccasion">Occasion (optional)</label>
+                  <input
+                    id="giftOccasion"
+                    className={inputClass}
+                    value={giftOccasion}
+                    onChange={(e) => setGiftOccasion(e.target.value)}
+                    placeholder="e.g. Birthday"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="giftRecipientName">Recipient&apos;s name</label>
+                  <input
+                    id="giftRecipientName"
+                    required
+                    className={inputClass}
+                    value={giftRecipientName}
+                    onChange={(e) => setGiftRecipientName(e.target.value)}
+                    placeholder="Who is this gift for?"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="giftRecipientPhone">Recipient&apos;s phone</label>
+                  <input
+                    id="giftRecipientPhone"
+                    required
+                    type="tel"
+                    className={inputClass}
+                    value={giftRecipientPhone}
+                    onChange={(e) => setGiftRecipientPhone(e.target.value)}
+                    placeholder="Their contact number"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className={labelClass} htmlFor="giftRecipientAddress">Recipient&apos;s delivery address</label>
+                  <textarea
+                    id="giftRecipientAddress"
+                    required
+                    rows={2}
+                    className={inputClass}
+                    value={giftRecipientAddress}
+                    onChange={(e) => setGiftRecipientAddress(e.target.value)}
+                    placeholder="Where should we deliver the gift?"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="giftSenderName">Your name (sender)</label>
+                  <input
+                    id="giftSenderName"
+                    className={inputClass}
+                    value={giftSenderName}
+                    onChange={(e) => setGiftSenderName(e.target.value)}
+                    placeholder="So we know who it's from"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="giftSenderPhone">Your phone (sender)</label>
+                  <input
+                    id="giftSenderPhone"
+                    type="tel"
+                    className={inputClass}
+                    value={giftSenderPhone}
+                    onChange={(e) => setGiftSenderPhone(e.target.value)}
+                    placeholder="In case we need to reach you"
+                  />
+                </div>
+              </div>
+            )}
+
+            {!isGift && addresses.length > 0 && (
               <div className="mt-5 space-y-2">
                 {addresses.map((address) => (
                   <div
@@ -417,7 +546,7 @@ export default function CheckoutPage() {
             )}
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
-              {!usingSavedAddress && (
+              {!isGift && !usingSavedAddress && (
                 <>
                   <div>
                     <label className={labelClass} htmlFor="fullName">Full name</label>
