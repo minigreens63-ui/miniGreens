@@ -11,9 +11,9 @@ const BADGES = [
   { Icon: Truck, label: ["Freshly Cut &", "Delivered"] },
 ];
 
-const HERO_SRC = "/images/hero/hero-flatlay-green-vitality.webp";
-const HERO_MOBILE_SRC = "/images/hero/hero-tube-mobile.webp";
-const HERO_ALT = "Mini Greens Green Detox microgreen tea tube with a glass of brewed tea";
+const HERO_SRC = "/images/tea/blends/rose-hibiscus-ruby.webp";
+const HERO_MOBILE_SRC = "/images/tea/blends/rose-hibiscus-ruby.webp";
+const HERO_ALT = "Mini Greens Rose Hibiscus Ruby microgreen tea tin with fresh florals and a cup of brewed tea";
 
 export function HomeHero() {
   return (
@@ -42,7 +42,7 @@ export function HomeHero() {
 
       {/* Mobile: product photo first, at full strength, then the copy. */}
       <div className="relative aspect-square md:hidden">
-        <Image src={HERO_MOBILE_SRC} alt={HERO_ALT} fill priority sizes="100vw" className="object-cover object-[center_68%]" />
+        <Image src={HERO_MOBILE_SRC} alt={HERO_ALT} fill priority sizes="100vw" className="object-cover object-[75%_45%]" />
         <div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-(--color-cream) to-transparent" />
       </div>
 

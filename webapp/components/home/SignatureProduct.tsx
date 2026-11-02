@@ -1,17 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Coffee, Heart, Leaf, Repeat, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { Drop, Flower, Leaf, Sparkle, Repeat } from "@phosphor-icons/react/dist/ssr";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { AddToCartButton } from "@/components/home/AddToCartButton";
 import { ScriptNote } from "@/components/home/ScriptNote";
 
-const SLUG = "green-detox-bag";
+const SLUG = "green-hibiscus-bag";
 
 const PERKS = [
-  { Icon: Leaf, label: "Supports natural detox" },
-  { Icon: Coffee, label: "Caffeine-free" },
-  { Icon: Sparkle, label: "Rich in antioxidants" },
-  { Icon: Heart, label: "Tastes amazing" },
+  { Icon: Flower, label: "Floral flavour" },
+  { Icon: Drop, label: "Tart notes" },
+  { Icon: Leaf, label: "Refreshing blend" },
+  { Icon: Sparkle, label: "Vibrant infusion" },
 ];
 
 export async function SignatureProduct() {
@@ -33,8 +33,8 @@ export async function SignatureProduct() {
       />
       <div className="absolute bottom-0 right-[2%] top-10 hidden w-[52%] sm:block">
         <Image
-          src="/images/tea/blends/green-detox.webp"
-          alt="Green Detox Microgreen Tea tube"
+          src="/images/tea/blends/rose-hibiscus-ruby.webp"
+          alt="Rose Hibiscus Ruby microgreen tea tin"
           fill
           sizes="52vw"
           className="object-contain object-bottom drop-shadow-[0_24px_30px_rgba(31,58,36,0.18)]"
@@ -43,12 +43,12 @@ export async function SignatureProduct() {
 
       <div className="absolute left-[44%] top-[20%] z-10 hidden size-32 -rotate-6 items-center justify-center rounded-full border-[3px] border-(--color-forest)/20 bg-(--color-forest) p-3 text-center text-xs font-semibold uppercase leading-snug tracking-wide text-white shadow-lg lg:flex">
         <span className="flex size-full items-center justify-center rounded-full border border-white/30 px-2">
-          A cleaner tomorrow in every sip
+          A little green. A better ritual.
         </span>
       </div>
 
       <ScriptNote
-        lines={["Plants", "not pills"]}
+        lines={["Floral,", "not fake"]}
         arrow="down"
         className="absolute right-[5%] top-10 hidden lg:block"
       />
@@ -56,8 +56,8 @@ export async function SignatureProduct() {
       <div className="relative mx-auto flex min-h-0 max-w-7xl flex-col justify-center px-6 py-12 sm:min-h-[520px] sm:py-16 md:px-10">
         <div className="relative mx-auto mb-6 aspect-square w-full max-w-[220px] sm:hidden">
           <Image
-            src="/images/tea/blends/green-detox.webp"
-            alt="Green Detox Microgreen Tea tube"
+            src="/images/tea/blends/rose-hibiscus-ruby.webp"
+            alt="Rose Hibiscus Ruby microgreen tea tin"
             fill
             sizes="220px"
             className="object-contain drop-shadow-[0_16px_20px_rgba(31,58,36,0.18)]"
@@ -68,15 +68,15 @@ export async function SignatureProduct() {
             Our signature product
           </p>
           <h2 className="font-serif-display mt-3 text-4xl leading-[1.08] text-(--color-forest) sm:text-[44px]">
-            Green Detox
+            Rose Hibiscus
             <br />
-            Microgreen Tea
+            Ruby
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-(--color-forest)/75">
-            Broccoli and arugula microgreens with refreshing mint and coriander. Fresh, with a
-            gentle spicy kick, for a daily wellness ritual that actually tastes good.
+            Sunflower microgreens with rose, hibiscus, and lemon peel. Floral and tart, with a
+            vibrant ruby infusion, for a daily ritual that actually tastes good.
           </p>
-          <p className="mt-2 text-xs font-medium text-(--color-forest)/60">10 sachets · Naturally caffeine-free</p>
+          <p className="mt-2 text-xs font-medium text-(--color-forest)/60">15 sachets · Naturally caffeine-free</p>
           {price != null && (
             <p className="font-display mt-5 text-2xl font-semibold text-(--color-forest)">₹{price}</p>
           )}

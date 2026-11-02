@@ -34,7 +34,7 @@ const LOCAL_IMAGE_BY_SLUG: Record<string, string> = {
   "mint-green-bag": "/images/tea/blends/mint-green.webp",
   "green-apple-bag": "/images/tea/blends/green-apple.webp",
   "ginger-green-bag": "/images/tea/blends/ginger-green.webp",
-  "green-hibiscus-bag": "/images/tea/blends/green-hibiscus.webp",
+  "green-hibiscus-bag": "/images/tea/blends/rose-hibiscus-ruby.webp",
 };
 
 // Extra gallery angles for the product detail page, keyed by slug. The first
